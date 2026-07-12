@@ -10,9 +10,8 @@
 
 ---
 
-<table>
-  <tr>
-    <td width="28%" valign="top">
+<table><tr>
+<td width="28%" valign="top">
 
 ### 🪶 ABOUT ME
 
@@ -30,8 +29,8 @@
 
 <sub>Every badge and card below is a real link.</sub>
 
-    </td>
-    <td width="47%" valign="top">
+</td>
+<td width="47%" valign="top">
 
 ### 🧬 LANGUAGES
 
@@ -53,8 +52,8 @@
 
 [![Docker](https://img.shields.io/badge/docker-%230db7ed.svg?style=for-the-badge&logo=docker&logoColor=white)](https://www.docker.com/) [![GitHub Actions](https://img.shields.io/badge/github%20actions-%232671E5.svg?style=for-the-badge&logo=githubactions&logoColor=white)](https://github.com/features/actions) [![GitLab CI](https://img.shields.io/badge/gitlab%20CI-%23181717.svg?style=for-the-badge&logo=gitlab&logoColor=white)](https://docs.gitlab.com/ci/) [![GitHub](https://img.shields.io/badge/github-%23121011.svg?style=for-the-badge&logo=github&logoColor=white)](https://github.com/) [![Vercel](https://img.shields.io/badge/vercel-%23000000.svg?style=for-the-badge&logo=vercel&logoColor=white)](https://vercel.com/) [![Netlify](https://img.shields.io/badge/netlify-%23000000.svg?style=for-the-badge&logo=netlify&logoColor=#00C7B7)](https://www.netlify.com/) [![Nginx](https://img.shields.io/badge/nginx-%23009639.svg?style=for-the-badge&logo=nginx&logoColor=white)](https://nginx.org/) [![Gradle](https://img.shields.io/badge/Gradle-02303A.svg?style=for-the-badge&logo=Gradle&logoColor=white)](https://gradle.org/) [![Playwright](https://img.shields.io/badge/-playwright-%232EAD33?style=for-the-badge&logo=playwright&logoColor=white)](https://playwright.dev/) [![Sentry](https://img.shields.io/badge/sentry-%23362D59.svg?style=for-the-badge&logo=sentry&logoColor=white)](https://sentry.io/) [![OpenCV](https://img.shields.io/badge/opencv-%23white.svg?style=for-the-badge&logo=opencv&logoColor=white)](https://opencv.org/) [![nVIDIA](https://img.shields.io/badge/nVIDIA-%2376B900.svg?style=for-the-badge&logo=nVIDIA&logoColor=white)](https://www.nvidia.com/)
 
-    </td>
-    <td width="25%" valign="top">
+</td>
+<td width="25%" valign="top">
 
 ### 📊 GITHUB STATS
 
@@ -69,9 +68,8 @@
 > *The code is transient.*<br>
 > *The impact is eternal.*
 
-    </td>
-  </tr>
-</table>
+</td>
+</tr></table>
 
 ---
 

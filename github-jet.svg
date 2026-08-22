@@ -513,65 +513,95 @@
   <!-- Option 3: Lock-On Homing Photon Torpedoes Weapon System -->
   <g id="photon-torpedoes">
   <!-- Left Homing Photon Torpedo Payload -->
-  <g class="torpedo-payload" transform="translate(-9, 0)" opacity="0">
-    <ellipse cx="0" cy="0" rx="2.2" ry="4.5" fill="#FFFFFF"/>
-    <polygon points="-2,3 2,3 0,10" fill="#FACC15"/>
-    <ellipse cx="0" cy="5" rx="3.5" ry="1.8" fill="#38BDF8" opacity="0.8"/>
-    <!-- Curved Left Arc Motion (Outward then Inward to Matrix Node) -->
-    <animateTransform attributeName="transform" type="translate" dur="4.5s" repeatCount="indefinite" calcMode="spline"
-      keyTimes="0; 0.044; 0.222; 0.223; 1"
-      keySplines="0.4 0 0.6 1; 0.4 0 0.6 1; 0 0 1 1; 0 0 1 1"
-      values="-9,0; -26,-60; -14,-120; -9,0; -9,0"/>
-    <animate attributeName="opacity" dur="4.5s" repeatCount="indefinite" calcMode="discrete"
-      keyTimes="0; 0.044; 0.222; 1" values="0; 1; 0; 0"/>
+  <g class="torpedo-payload" transform="translate(-10, 0)" opacity="0">
+    <ellipse cx="0" cy="0" rx="3.5" ry="7" fill="#FFFFFF" filter="url(#softGlow)"/>
+    <ellipse cx="0" cy="0" rx="2" ry="4.5" fill="#FFFFFF"/>
+    <!-- Glowing Plasma Energy Trail -->
+    <polygon points="-3,5 3,5 0,18" fill="url(#plasmaFlame)">
+      <animate attributeName="opacity" values="0.8;1;0.7;1" dur="0.1s" repeatCount="indefinite"/>
+    </polygon>
+    <circle cx="0" cy="8" r="4" fill="#38BDF8" opacity="0.6"/>
+    <!-- Curved Left Arc Motion (Launches from Pod -> Curves Outward -> Homes into Matrix Node) -->
+    <animateTransform attributeName="transform" type="translate" dur="2.2s" repeatCount="indefinite" calcMode="spline"
+      keyTimes="0; 0.05; 0.40; 0.41; 1"
+      keySplines="0.2 0 0.4 1; 0.2 0 0.4 1; 0 0 1 1; 0 0 1 1"
+      values="-10,0; -32,-65; -16,-125; -10,0; -10,0"/>
+    <animate attributeName="opacity" dur="2.2s" repeatCount="indefinite" calcMode="discrete"
+      keyTimes="0; 0.05; 0.40; 1" values="0; 1; 0; 0"/>
   </g>
 
   <!-- Right Homing Photon Torpedo Payload -->
-  <g class="torpedo-payload" transform="translate(9, 0)" opacity="0">
-    <ellipse cx="0" cy="0" rx="2.2" ry="4.5" fill="#FFFFFF"/>
-    <polygon points="-2,3 2,3 0,10" fill="#FACC15"/>
-    <ellipse cx="0" cy="5" rx="3.5" ry="1.8" fill="#38BDF8" opacity="0.8"/>
-    <!-- Curved Right Arc Motion (Outward then Inward to Matrix Node) -->
-    <animateTransform attributeName="transform" type="translate" dur="4.5s" repeatCount="indefinite" calcMode="spline"
-      keyTimes="0; 0.044; 0.222; 0.223; 1"
-      keySplines="0.4 0 0.6 1; 0.4 0 0.6 1; 0 0 1 1; 0 0 1 1"
-      values="9,0; 26,-60; 14,-120; 9,0; 9,0"/>
-    <animate attributeName="opacity" dur="4.5s" repeatCount="indefinite" calcMode="discrete"
-      keyTimes="0; 0.044; 0.222; 1" values="0; 1; 0; 0"/>
+  <g class="torpedo-payload" transform="translate(10, 0)" opacity="0">
+    <ellipse cx="0" cy="0" rx="3.5" ry="7" fill="#FFFFFF" filter="url(#softGlow)"/>
+    <ellipse cx="0" cy="0" rx="2" ry="4.5" fill="#FFFFFF"/>
+    <!-- Glowing Plasma Energy Trail -->
+    <polygon points="-3,5 3,5 0,18" fill="url(#plasmaFlame)">
+      <animate attributeName="opacity" values="0.8;1;0.7;1" dur="0.1s" repeatCount="indefinite"/>
+    </polygon>
+    <circle cx="0" cy="8" r="4" fill="#38BDF8" opacity="0.6"/>
+    <!-- Curved Right Arc Motion (Launches from Pod -> Curves Outward -> Homes into Matrix Node) -->
+    <animateTransform attributeName="transform" type="translate" dur="2.2s" repeatCount="indefinite" calcMode="spline"
+      keyTimes="0; 0.05; 0.40; 0.41; 1"
+      keySplines="0.2 0 0.4 1; 0.2 0 0.4 1; 0 0 1 1; 0 0 1 1"
+      values="10,0; 32,-65; 16,-125; 10,0; 10,0"/>
+    <animate attributeName="opacity" dur="2.2s" repeatCount="indefinite" calcMode="discrete"
+      keyTimes="0; 0.05; 0.40; 1" values="0; 1; 0; 0"/>
   </g>
 
   <!-- Impact Shockwave Burst Over Matrix Nodes -->
   <g class="impact-shockwave">
-    <!-- Left Impact Expanding Rings & Sparks -->
-    <circle cx="-14" cy="-120" r="0" fill="none" stroke="#FACC15" stroke-width="1.6" class="shockwave-ring" opacity="0">
-      <animate attributeName="r" dur="4.5s" repeatCount="indefinite" keyTimes="0; 0.222; 0.333; 1" values="0; 2; 22; 0"/>
-      <animate attributeName="opacity" dur="4.5s" repeatCount="indefinite" keyTimes="0; 0.222; 0.333; 1" values="0; 1; 0; 0"/>
+    <!-- Left Impact Expanding Rings & Spark Stars -->
+    <circle cx="-16" cy="-125" r="0" fill="#38BDF8" opacity="0">
+      <animate attributeName="r" dur="2.2s" repeatCount="indefinite" keyTimes="0; 0.40; 0.55; 1" values="0; 14; 22; 0"/>
+      <animate attributeName="opacity" dur="2.2s" repeatCount="indefinite" keyTimes="0; 0.40; 0.55; 1" values="0; 0.5; 0; 0"/>
     </circle>
-    <circle cx="-14" cy="-120" r="0" fill="none" stroke="#38BDF8" stroke-width="1.2" class="shockwave-ring" opacity="0">
-      <animate attributeName="r" dur="4.5s" repeatCount="indefinite" keyTimes="0; 0.222; 0.377; 1" values="0; 4; 28; 0"/>
-      <animate attributeName="opacity" dur="4.5s" repeatCount="indefinite" keyTimes="0; 0.222; 0.377; 1" values="0; 0.85; 0; 0"/>
+    <circle cx="-16" cy="-125" r="0" fill="none" stroke="#FACC15" stroke-width="2" class="shockwave-ring" opacity="0">
+      <animate attributeName="r" dur="2.2s" repeatCount="indefinite" keyTimes="0; 0.40; 0.60; 1" values="0; 4; 26; 0"/>
+      <animate attributeName="opacity" dur="2.2s" repeatCount="indefinite" keyTimes="0; 0.40; 0.60; 1" values="0; 1; 0; 0"/>
     </circle>
-    <line x1="-20" y1="-120" x2="-8" y2="-120" stroke="#FFFFFF" stroke-width="1.2" opacity="0">
-      <animate attributeName="opacity" dur="4.5s" repeatCount="indefinite" keyTimes="0; 0.222; 0.311; 1" values="0; 1; 0; 0"/>
+    <circle cx="-16" cy="-125" r="0" fill="none" stroke="#38BDF8" stroke-width="1.5" class="shockwave-ring" opacity="0">
+      <animate attributeName="r" dur="2.2s" repeatCount="indefinite" keyTimes="0; 0.40; 0.68; 1" values="0; 6; 34; 0"/>
+      <animate attributeName="opacity" dur="2.2s" repeatCount="indefinite" keyTimes="0; 0.40; 0.68; 1" values="0; 0.9; 0; 0"/>
+    </circle>
+    <!-- Left 8-Point Spark Lines -->
+    <line x1="-26" y1="-125" x2="-6" y2="-125" stroke="#FFFFFF" stroke-width="1.5" opacity="0">
+      <animate attributeName="opacity" dur="2.2s" repeatCount="indefinite" keyTimes="0; 0.40; 0.56; 1" values="0; 1; 0; 0"/>
     </line>
-    <line x1="-14" y1="-126" x2="-14" y2="-114" stroke="#FFFFFF" stroke-width="1.2" opacity="0">
-      <animate attributeName="opacity" dur="4.5s" repeatCount="indefinite" keyTimes="0; 0.222; 0.311; 1" values="0; 1; 0; 0"/>
+    <line x1="-16" y1="-135" x2="-16" y2="-115" stroke="#FFFFFF" stroke-width="1.5" opacity="0">
+      <animate attributeName="opacity" dur="2.2s" repeatCount="indefinite" keyTimes="0; 0.40; 0.56; 1" values="0; 1; 0; 0"/>
+    </line>
+    <line x1="-23" y1="-132" x2="-9" y2="-118" stroke="#FACC15" stroke-width="1.2" opacity="0">
+      <animate attributeName="opacity" dur="2.2s" repeatCount="indefinite" keyTimes="0; 0.40; 0.56; 1" values="0; 1; 0; 0"/>
+    </line>
+    <line x1="-23" y1="-118" x2="-9" y2="-132" stroke="#FACC15" stroke-width="1.2" opacity="0">
+      <animate attributeName="opacity" dur="2.2s" repeatCount="indefinite" keyTimes="0; 0.40; 0.56; 1" values="0; 1; 0; 0"/>
     </line>
 
-    <!-- Right Impact Expanding Rings & Sparks -->
-    <circle cx="14" cy="-120" r="0" fill="none" stroke="#FACC15" stroke-width="1.6" class="shockwave-ring" opacity="0">
-      <animate attributeName="r" dur="4.5s" repeatCount="indefinite" keyTimes="0; 0.222; 0.333; 1" values="0; 2; 22; 0"/>
-      <animate attributeName="opacity" dur="4.5s" repeatCount="indefinite" keyTimes="0; 0.222; 0.333; 1" values="0; 1; 0; 0"/>
+    <!-- Right Impact Expanding Rings & Spark Stars -->
+    <circle cx="16" cy="-125" r="0" fill="#38BDF8" opacity="0">
+      <animate attributeName="r" dur="2.2s" repeatCount="indefinite" keyTimes="0; 0.40; 0.55; 1" values="0; 14; 22; 0"/>
+      <animate attributeName="opacity" dur="2.2s" repeatCount="indefinite" keyTimes="0; 0.40; 0.55; 1" values="0; 0.5; 0; 0"/>
     </circle>
-    <circle cx="14" cy="-120" r="0" fill="none" stroke="#38BDF8" stroke-width="1.2" class="shockwave-ring" opacity="0">
-      <animate attributeName="r" dur="4.5s" repeatCount="indefinite" keyTimes="0; 0.222; 0.377; 1" values="0; 4; 28; 0"/>
-      <animate attributeName="opacity" dur="4.5s" repeatCount="indefinite" keyTimes="0; 0.222; 0.377; 1" values="0; 0.85; 0; 0"/>
+    <circle cx="16" cy="-125" r="0" fill="none" stroke="#FACC15" stroke-width="2" class="shockwave-ring" opacity="0">
+      <animate attributeName="r" dur="2.2s" repeatCount="indefinite" keyTimes="0; 0.40; 0.60; 1" values="0; 4; 26; 0"/>
+      <animate attributeName="opacity" dur="2.2s" repeatCount="indefinite" keyTimes="0; 0.40; 0.60; 1" values="0; 1; 0; 0"/>
     </circle>
-    <line x1="8" y1="-120" x2="20" y2="-120" stroke="#FFFFFF" stroke-width="1.2" opacity="0">
-      <animate attributeName="opacity" dur="4.5s" repeatCount="indefinite" keyTimes="0; 0.222; 0.311; 1" values="0; 1; 0; 0"/>
+    <circle cx="16" cy="-125" r="0" fill="none" stroke="#38BDF8" stroke-width="1.5" class="shockwave-ring" opacity="0">
+      <animate attributeName="r" dur="2.2s" repeatCount="indefinite" keyTimes="0; 0.40; 0.68; 1" values="0; 6; 34; 0"/>
+      <animate attributeName="opacity" dur="2.2s" repeatCount="indefinite" keyTimes="0; 0.40; 0.68; 1" values="0; 0.9; 0; 0"/>
+    </circle>
+    <!-- Right 8-Point Spark Lines -->
+    <line x1="6" y1="-125" x2="26" y2="-125" stroke="#FFFFFF" stroke-width="1.5" opacity="0">
+      <animate attributeName="opacity" dur="2.2s" repeatCount="indefinite" keyTimes="0; 0.40; 0.56; 1" values="0; 1; 0; 0"/>
     </line>
-    <line x1="14" y1="-126" x2="14" y2="-114" stroke="#FFFFFF" stroke-width="1.2" opacity="0">
-      <animate attributeName="opacity" dur="4.5s" repeatCount="indefinite" keyTimes="0; 0.222; 0.311; 1" values="0; 1; 0; 0"/>
+    <line x1="16" y1="-135" x2="16" y2="-115" stroke="#FFFFFF" stroke-width="1.5" opacity="0">
+      <animate attributeName="opacity" dur="2.2s" repeatCount="indefinite" keyTimes="0; 0.40; 0.56; 1" values="0; 1; 0; 0"/>
+    </line>
+    <line x1="9" y1="-132" x2="23" y2="-118" stroke="#FACC15" stroke-width="1.2" opacity="0">
+      <animate attributeName="opacity" dur="2.2s" repeatCount="indefinite" keyTimes="0; 0.40; 0.56; 1" values="0; 1; 0; 0"/>
+    </line>
+    <line x1="9" y1="-118" x2="23" y2="-132" stroke="#FACC15" stroke-width="1.2" opacity="0">
+      <animate attributeName="opacity" dur="2.2s" repeatCount="indefinite" keyTimes="0; 0.40; 0.56; 1" values="0; 1; 0; 0"/>
     </line>
   </g>
 </g>

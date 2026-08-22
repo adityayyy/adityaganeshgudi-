@@ -1,10 +1,10 @@
 #!/usr/bin/env node
 /**
- * Cyber-Stealth Interceptor: Clean Flight Engine
+ * Cyber-Stealth Interceptor: Level Flight Engine
  * 
- * Clean, weapon-free flight:
- * - Completely removed all laser/bullet mechanisms.
- * - Smooth aerodynamic banking (+4.5° / -4.5° roll physics).
+ * Clean, level flight:
+ * - Upright level flight (no tilting/banking).
+ * - Smooth horizontal flight translation.
  * - Pulsing afterburner flame and particle wake.
  * - Multi-layered deep space cosmic starfield.
  * - 100% Real-time GitHub GraphQL contributions.
@@ -98,13 +98,8 @@ function buildJet() {
     keyTimes="0;0.5;1"
     values="${JET_X_START},${JET_Y};${JET_X_END},${JET_Y};${JET_X_START},${JET_Y}"/>
 
-  <!-- Aerodynamic Banking Chassis -->
+  <!-- Level Jet Chassis (No Tilt) -->
   <g id="jet-chassis">
-    <animateTransform attributeName="transform" attributeType="XML" type="rotate"
-      dur="${LOOP_DUR}s" repeatCount="indefinite"
-      keyTimes="0; 0.03; 0.47; 0.50; 0.53; 0.97; 1.0"
-      values="0; 4.5; 4.5; 0; -4.5; -4.5; 0"/>
-
     <!-- Plasma Exhaust Wake -->
     <circle cx="0" cy="14" r="3" fill="#38BDF8" opacity="0.35">
       <animate attributeName="r" values="3;5.5;2" dur="0.22s" repeatCount="indefinite"/>

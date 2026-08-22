@@ -41,8 +41,8 @@
 <rect x="76.00" y="29.00" width="11" height="11" rx="2" ry="2" fill="#ebedf0"/>
 <rect x="76.00" y="43.00" width="11" height="11" rx="2" ry="2" fill="#ebedf0"/>
 <rect x="76.00" y="57.00" width="11" height="11" rx="2" ry="2" fill="#ebedf0"/>
-<rect x="76.00" y="71.00" width="11" height="11" rx="2" ry="2" fill="#ebedf0"/>
-<rect x="76.00" y="85.00" width="11" height="11" rx="2" ry="2" fill="#9be9a8"/>
+<rect x="76.00" y="71.00" width="11" height="11" rx="2" ry="2" fill="#9be9a8"/>
+<rect x="76.00" y="85.00" width="11" height="11" rx="2" ry="2" fill="#ebedf0"/>
 <rect x="76.00" y="99.00" width="11" height="11" rx="2" ry="2" fill="#ebedf0"/>
 <rect x="90.00" y="15.00" width="11" height="11" rx="2" ry="2" fill="#ebedf0"/>
 <rect x="90.00" y="29.00" width="11" height="11" rx="2" ry="2" fill="#ebedf0"/>
@@ -78,7 +78,7 @@
 <rect x="146.00" y="57.00" width="11" height="11" rx="2" ry="2" fill="#ebedf0"/>
 <rect x="146.00" y="71.00" width="11" height="11" rx="2" ry="2" fill="#ebedf0"/>
 <rect x="146.00" y="85.00" width="11" height="11" rx="2" ry="2" fill="#ebedf0"/>
-<rect x="146.00" y="99.00" width="11" height="11" rx="2" ry="2" fill="#ebedf0"/>
+<rect x="146.00" y="99.00" width="11" height="11" rx="2" ry="2" fill="#9be9a8"/>
 <rect x="160.00" y="15.00" width="11" height="11" rx="2" ry="2" fill="#9be9a8"/>
 <rect x="160.00" y="29.00" width="11" height="11" rx="2" ry="2" fill="#9be9a8"/>
 <rect x="160.00" y="43.00" width="11" height="11" rx="2" ry="2" fill="#9be9a8"/>
@@ -106,7 +106,7 @@
 <rect x="202.00" y="57.00" width="11" height="11" rx="2" ry="2" fill="#ebedf0"/>
 <rect x="202.00" y="71.00" width="11" height="11" rx="2" ry="2" fill="#ebedf0"/>
 <rect x="202.00" y="85.00" width="11" height="11" rx="2" ry="2" fill="#9be9a8"/>
-<rect x="202.00" y="99.00" width="11" height="11" rx="2" ry="2" fill="#ebedf0"/>
+<rect x="202.00" y="99.00" width="11" height="11" rx="2" ry="2" fill="#9be9a8"/>
 <rect x="216.00" y="15.00" width="11" height="11" rx="2" ry="2" fill="#9be9a8"/>
 <rect x="216.00" y="29.00" width="11" height="11" rx="2" ry="2" fill="#ebedf0"/>
 <rect x="216.00" y="43.00" width="11" height="11" rx="2" ry="2" fill="#ebedf0"/>
@@ -188,16 +188,16 @@
 <rect x="370.00" y="29.00" width="11" height="11" rx="2" ry="2" fill="#ebedf0"/>
 <rect x="370.00" y="43.00" width="11" height="11" rx="2" ry="2" fill="#ebedf0"/>
 <rect x="370.00" y="57.00" width="11" height="11" rx="2" ry="2" fill="#9be9a8"/>
-<rect x="370.00" y="71.00" width="11" height="11" rx="2" ry="2" fill="#ebedf0"/>
+<rect x="370.00" y="71.00" width="11" height="11" rx="2" ry="2" fill="#9be9a8"/>
 <rect x="370.00" y="85.00" width="11" height="11" rx="2" ry="2" fill="#9be9a8"/>
-<rect x="370.00" y="99.00" width="11" height="11" rx="2" ry="2" fill="#ebedf0"/>
+<rect x="370.00" y="99.00" width="11" height="11" rx="2" ry="2" fill="#9be9a8"/>
 <rect x="384.00" y="15.00" width="11" height="11" rx="2" ry="2" fill="#9be9a8"/>
 <rect x="384.00" y="29.00" width="11" height="11" rx="2" ry="2" fill="#9be9a8"/>
 <rect x="384.00" y="43.00" width="11" height="11" rx="2" ry="2" fill="#9be9a8"/>
 <rect x="384.00" y="57.00" width="11" height="11" rx="2" ry="2" fill="#9be9a8"/>
 <rect x="384.00" y="71.00" width="11" height="11" rx="2" ry="2" fill="#9be9a8"/>
 <rect x="384.00" y="85.00" width="11" height="11" rx="2" ry="2" fill="#9be9a8"/>
-<rect x="384.00" y="99.00" width="11" height="11" rx="2" ry="2" fill="#9be9a8"/>
+<rect x="384.00" y="99.00" width="11" height="11" rx="2" ry="2" fill="#ebedf0"/>
 <rect x="398.00" y="15.00" width="11" height="11" rx="2" ry="2" fill="#ebedf0"/>
 <rect x="398.00" y="29.00" width="11" height="11" rx="2" ry="2" fill="#30a14e"><animate attributeName="fill" dur="20s" repeatCount="indefinite" keyTimes="0;0.3964;0.4024;0.6036;0.6096;1" values="#30a14e;#30a14e;#39d353;#30a14e;#39d353;#30a14e"/></rect>
 <rect x="398.00" y="43.00" width="11" height="11" rx="2" ry="2" fill="#30a14e"><animate attributeName="fill" dur="20s" repeatCount="indefinite" keyTimes="0;0.3964;0.4024;0.6036;0.6096;1" values="#30a14e;#30a14e;#39d353;#30a14e;#39d353;#30a14e"/></rect>

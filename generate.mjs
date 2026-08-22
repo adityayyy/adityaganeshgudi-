@@ -268,8 +268,78 @@ export function buildLegend() {
   return svg;
 }
 
+export function buildPhotonTorpedoes() {
+  return `<g id="photon-torpedoes">
+  <!-- Left Homing Photon Torpedo Payload -->
+  <g class="torpedo-payload" transform="translate(-9, 0)" opacity="0">
+    <ellipse cx="0" cy="0" rx="2.2" ry="4.5" fill="#FFFFFF"/>
+    <polygon points="-2,3 2,3 0,10" fill="#FACC15"/>
+    <ellipse cx="0" cy="5" rx="3.5" ry="1.8" fill="#38BDF8" opacity="0.8"/>
+    <!-- Curved Left Arc Motion (Outward then Inward to Matrix Node) -->
+    <animateTransform attributeName="transform" type="translate" dur="4.5s" repeatCount="indefinite" calcMode="spline"
+      keyTimes="0; 0.044; 0.222; 0.223; 1"
+      keySplines="0.4 0 0.6 1; 0.4 0 0.6 1; 0 0 1 1; 0 0 1 1"
+      values="-9,0; -26,-60; -14,-120; -9,0; -9,0"/>
+    <animate attributeName="opacity" dur="4.5s" repeatCount="indefinite" calcMode="discrete"
+      keyTimes="0; 0.044; 0.222; 1" values="0; 1; 0; 0"/>
+  </g>
+
+  <!-- Right Homing Photon Torpedo Payload -->
+  <g class="torpedo-payload" transform="translate(9, 0)" opacity="0">
+    <ellipse cx="0" cy="0" rx="2.2" ry="4.5" fill="#FFFFFF"/>
+    <polygon points="-2,3 2,3 0,10" fill="#FACC15"/>
+    <ellipse cx="0" cy="5" rx="3.5" ry="1.8" fill="#38BDF8" opacity="0.8"/>
+    <!-- Curved Right Arc Motion (Outward then Inward to Matrix Node) -->
+    <animateTransform attributeName="transform" type="translate" dur="4.5s" repeatCount="indefinite" calcMode="spline"
+      keyTimes="0; 0.044; 0.222; 0.223; 1"
+      keySplines="0.4 0 0.6 1; 0.4 0 0.6 1; 0 0 1 1; 0 0 1 1"
+      values="9,0; 26,-60; 14,-120; 9,0; 9,0"/>
+    <animate attributeName="opacity" dur="4.5s" repeatCount="indefinite" calcMode="discrete"
+      keyTimes="0; 0.044; 0.222; 1" values="0; 1; 0; 0"/>
+  </g>
+
+  <!-- Impact Shockwave Burst Over Matrix Nodes -->
+  <g class="impact-shockwave">
+    <!-- Left Impact Expanding Rings & Sparks -->
+    <circle cx="-14" cy="-120" r="0" fill="none" stroke="#FACC15" stroke-width="1.6" class="shockwave-ring" opacity="0">
+      <animate attributeName="r" dur="4.5s" repeatCount="indefinite" keyTimes="0; 0.222; 0.333; 1" values="0; 2; 22; 0"/>
+      <animate attributeName="opacity" dur="4.5s" repeatCount="indefinite" keyTimes="0; 0.222; 0.333; 1" values="0; 1; 0; 0"/>
+    </circle>
+    <circle cx="-14" cy="-120" r="0" fill="none" stroke="#38BDF8" stroke-width="1.2" class="shockwave-ring" opacity="0">
+      <animate attributeName="r" dur="4.5s" repeatCount="indefinite" keyTimes="0; 0.222; 0.377; 1" values="0; 4; 28; 0"/>
+      <animate attributeName="opacity" dur="4.5s" repeatCount="indefinite" keyTimes="0; 0.222; 0.377; 1" values="0; 0.85; 0; 0"/>
+    </circle>
+    <line x1="-20" y1="-120" x2="-8" y2="-120" stroke="#FFFFFF" stroke-width="1.2" opacity="0">
+      <animate attributeName="opacity" dur="4.5s" repeatCount="indefinite" keyTimes="0; 0.222; 0.311; 1" values="0; 1; 0; 0"/>
+    </line>
+    <line x1="-14" y1="-126" x2="-14" y2="-114" stroke="#FFFFFF" stroke-width="1.2" opacity="0">
+      <animate attributeName="opacity" dur="4.5s" repeatCount="indefinite" keyTimes="0; 0.222; 0.311; 1" values="0; 1; 0; 0"/>
+    </line>
+
+    <!-- Right Impact Expanding Rings & Sparks -->
+    <circle cx="14" cy="-120" r="0" fill="none" stroke="#FACC15" stroke-width="1.6" class="shockwave-ring" opacity="0">
+      <animate attributeName="r" dur="4.5s" repeatCount="indefinite" keyTimes="0; 0.222; 0.333; 1" values="0; 2; 22; 0"/>
+      <animate attributeName="opacity" dur="4.5s" repeatCount="indefinite" keyTimes="0; 0.222; 0.333; 1" values="0; 1; 0; 0"/>
+    </circle>
+    <circle cx="14" cy="-120" r="0" fill="none" stroke="#38BDF8" stroke-width="1.2" class="shockwave-ring" opacity="0">
+      <animate attributeName="r" dur="4.5s" repeatCount="indefinite" keyTimes="0; 0.222; 0.377; 1" values="0; 4; 28; 0"/>
+      <animate attributeName="opacity" dur="4.5s" repeatCount="indefinite" keyTimes="0; 0.222; 0.377; 1" values="0; 0.85; 0; 0"/>
+    </circle>
+    <line x1="8" y1="-120" x2="20" y2="-120" stroke="#FFFFFF" stroke-width="1.2" opacity="0">
+      <animate attributeName="opacity" dur="4.5s" repeatCount="indefinite" keyTimes="0; 0.222; 0.311; 1" values="0; 1; 0; 0"/>
+    </line>
+    <line x1="14" y1="-126" x2="14" y2="-114" stroke="#FFFFFF" stroke-width="1.2" opacity="0">
+      <animate attributeName="opacity" dur="4.5s" repeatCount="indefinite" keyTimes="0; 0.222; 0.311; 1" values="0; 1; 0; 0"/>
+    </line>
+  </g>
+</g>`;
+}
+
 export function buildArcadeStarfighter() {
   return `<g id="starfighter">
+  <!-- Option 3: Lock-On Homing Photon Torpedoes Weapon System -->
+  ${buildPhotonTorpedoes()}
+
   <!-- Holographic Target Locking Reticle Locked over Matrix Grid -->
   <g id="targeting-reticle">
     <circle cx="0" cy="-120" r="18" fill="none" stroke="#4ADE80" stroke-width="1.2" stroke-dasharray="4 2" class="reticle-ring">

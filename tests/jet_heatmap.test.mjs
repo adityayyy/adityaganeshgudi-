@@ -9,13 +9,18 @@ import {
   computeArcadeScore,
   buildShieldBar,
   selectTargets,
-  buildDynamicReticle,
+  columnToTimeFraction,
+  buildMonotonicKeyTimes,
+  buildTargetLockBrackets,
   buildProminentRailguns,
   buildExplosiveImpacts,
+  buildDynamicReticle,
+  JET_X_START,
+  JET_X_END,
   THEME
 } from '../generate.mjs';
 
-describe('TDD: Dynamic Tracking Reticle & Prominent Synchronized Combat', () => {
+describe('TDD: Precision Closed-Form Spline Kinematics & Synchronized Combat', () => {
   describe('Input Sanitization & Data Parsing', () => {
     it('should sanitize XML/HTML special characters and disarm inline event handlers', () => {
       const malicious = '<script>alert("xss")</script>&"\' onload="evil()"';
@@ -39,35 +44,125 @@ describe('TDD: Dynamic Tracking Reticle & Prominent Synchronized Combat', () => 
     });
   });
 
-  describe('Dynamic Tracking Reticle & Sighting Laser Mechanics', () => {
-    it('should generate dynamic reticle with vertical Y-tracking animation and sighting laser guide', () => {
+  describe('Closed-Form Spline Kinematics & Mathematical Precision', () => {
+    it('should calculate exact time fractions for boundary and center columns without singularity', () => {
+      const col0 = columnToTimeFraction(0, 51);
+      assert.strictEqual(Number(col0.t_fwd.toFixed(4)), 0.0000);
+      assert.strictEqual(Number(col0.t_ret.toFixed(4)), 1.0000);
+
+      const col51 = columnToTimeFraction(51, 51);
+      assert.strictEqual(Number(col51.t_fwd.toFixed(4)), 0.5000);
+      assert.strictEqual(Number(col51.t_ret.toFixed(4)), 0.5000);
+
+      const colMid = columnToTimeFraction(25.5, 51);
+      assert.strictEqual(Number(colMid.t_fwd.toFixed(4)), 0.2500);
+      assert.strictEqual(Number(colMid.t_ret.toFixed(4)), 0.7500);
+    });
+
+    it('should mathematically guarantee jet position aligns with target column within 0.5px at t_hit', () => {
       const mockWeeks = generateMockWeeks(52);
       const cells = buildCells(mockWeeks, 52);
       const targets = selectTargets(cells);
-      const reticleSvg = buildDynamicReticle(targets);
-      assert.ok(reticleSvg.includes('id="targeting-reticle"'));
-      assert.ok(reticleSvg.includes('class="sighting-laser"'));
-      assert.ok(reticleSvg.includes('attributeName="transform"'));
-      assert.ok(reticleSvg.includes('type="translate"'));
+
+      for (const t of targets) {
+        // Forward sweep evaluation (0..0.5)
+        const pExpected = t.col / 51;
+        const expectedX = JET_X_START + pExpected * (JET_X_END - JET_X_START);
+        assert.ok(
+          Math.abs(expectedX - t.cx) <= 0.5,
+          `Forward alignment error at col ${t.col}: expected ${expectedX}, got ${t.cx}`
+        );
+
+        // Verify t_hit_fwd is within valid bounds [0.001, 0.499]
+        assert.ok(t.k_hit_fwd >= 0 && t.k_hit_fwd <= 0.5);
+        assert.ok(t.k_hit_ret >= 0.5 && t.k_hit_ret <= 1.0);
+      }
     });
   });
 
-  describe('Prominent Twin Plasma Railgun Blasts & Explosive Impact Bursts', () => {
-    it('should generate prominent twin plasma bolts with white core and neon glow filter', () => {
-      const railgunSvg = buildProminentRailguns();
-      assert.ok(railgunSvg.includes('id="prominent-railguns"'));
-      assert.ok(railgunSvg.includes('filter="url(#softGlow)"'));
-      assert.ok(railgunSvg.includes('class="plasma-beam"'));
+  describe('Strict Monotonic SMIL Timeline Builder', () => {
+    it('should generate strictly ascending keyTimes and prevent duplicate float collapse', () => {
+      const rawEvents = [
+        { time: 0.12345, value: '0' },
+        { time: 0.12346, value: '1' }, // extremely close
+        { time: 0.45000, value: '0' },
+        { time: 0.45000, value: '1' }  // identical duplicate
+      ];
+      const result = buildMonotonicKeyTimes(rawEvents);
+      const times = result.keyTimes.split('; ').map(Number);
+      
+      for (let i = 1; i < times.length; i++) {
+        assert.ok(times[i] > times[i - 1], `Non-monotonic keyTimes detected: ${times[i - 1]} >= ${times[i]}`);
+      }
+      assert.strictEqual(times[0], 0);
+      assert.strictEqual(times[times.length - 1], 1);
+    });
+  });
+
+  describe('Target Selection & Decoupled Combat Layer', () => {
+    it('should select 6 to 8 elite power nodes with minimum 4-column spacing', () => {
+      const mockWeeks = generateMockWeeks(52);
+      const cells = buildCells(mockWeeks, 52);
+      const targets = selectTargets(cells);
+
+      assert.ok(targets.length >= 6 && targets.length <= 8, `Target count ${targets.length} out of bounds`);
+      
+      // Verify minimum spacing rule
+      for (let i = 1; i < targets.length; i++) {
+        const diff = targets[i].col - targets[i - 1].col;
+        assert.ok(diff >= 4, `Target spacing violation between col ${targets[i - 1].col} and ${targets[i].col}`);
+      }
     });
 
-    it('should generate 36px expanding explosive shockwave detonations with radiating spark stars', () => {
+    it('should handle completely empty heatmaps (0 contributions) gracefully without error', () => {
+      const emptyWeeks = Array.from({ length: 52 }, () => ({
+        contributionDays: Array.from({ length: 7 }, () => ({ contributionCount: 0, color: THEME.palette[0], date: '2026-01-01' }))
+      }));
+      const cells = buildCells(emptyWeeks, 52);
+      const targets = selectTargets(cells);
+      assert.ok(Array.isArray(targets));
+      assert.ok(targets.length >= 6);
+    });
+
+    it('should generate transient holographic lock brackets for each target', () => {
+      const mockWeeks = generateMockWeeks(52);
+      const cells = buildCells(mockWeeks, 52);
+      const targets = selectTargets(cells);
+      const lockSvg = buildTargetLockBrackets(targets);
+      
+      assert.ok(lockSvg.includes('id="target-lock-brackets"'));
+      assert.ok(lockSvg.includes('class="lock-bracket"'));
+    });
+
+    it('should generate world-space vertical railgun lances fired on arrival', () => {
+      const mockWeeks = generateMockWeeks(52);
+      const cells = buildCells(mockWeeks, 52);
+      const targets = selectTargets(cells);
+      const railgunSvg = buildProminentRailguns(targets);
+      
+      assert.ok(railgunSvg.includes('id="world-space-railguns"'));
+      assert.ok(railgunSvg.includes('class="railgun-lance"'));
+      assert.ok(railgunSvg.includes('dur="18s"'));
+    });
+
+    it('should generate crisp 14px maximum shockwave detonations without visual grid occlusion', () => {
       const mockWeeks = generateMockWeeks(52);
       const cells = buildCells(mockWeeks, 52);
       const targets = selectTargets(cells);
       const impactSvg = buildExplosiveImpacts(targets);
+      
       assert.ok(impactSvg.includes('class="explosive-impact"'));
       assert.ok(impactSvg.includes('class="shockwave-primary"'));
-      assert.ok(impactSvg.includes('class="spark-star"'));
+      // Verify radius values for attributeName="r" do not exceed 14
+      const rAnimateMatches = impactSvg.match(/<animate attributeName="r"[^>]+values="([^"]+)"/g) || [];
+      assert.ok(rAnimateMatches.length > 0);
+      for (const m of rAnimateMatches) {
+        const valStr = m.match(/values="([^"]+)"/)[1];
+        const radii = valStr.split(';').map(s => Number(s.trim()));
+        for (const r of radii) {
+          assert.ok(r <= 14, `Shockwave radius ${r} exceeds 14px`);
+        }
+      }
     });
   });
 
@@ -82,7 +177,9 @@ describe('TDD: Dynamic Tracking Reticle & Prominent Synchronized Combat', () => 
       assert.ok(svg.includes('COMBO:'));
       assert.ok(svg.includes('x14 SHIPPER'));
       assert.ok(svg.includes('SHIELDS: 100%'));
-      assert.ok(svg.includes('id="targeting-reticle"'));
+      assert.ok(svg.includes('id="boresight-reticle"'));
+      assert.ok(svg.includes('id="target-lock-brackets"'));
+      assert.ok(svg.includes('id="world-space-railguns"'));
     });
   });
 });

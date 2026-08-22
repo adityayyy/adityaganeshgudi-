@@ -1,21 +1,13 @@
 <svg viewBox="0 0 513 170" xmlns="http://www.w3.org/2000/svg">
-<rect x="0" y="0" width="513" height="170" fill="#0B1120"/>
-<g id="stars">
-<circle cx="8" cy="22" r="1.1" fill="#94A3B8"><animate attributeName="opacity" values="0.15;0.9;0.15" dur="1.4s" repeatCount="indefinite"/></circle>
-<circle cx="12" cy="65" r="0.9" fill="#94A3B8"><animate attributeName="opacity" values="0.15;0.9;0.15" dur="2.2s" repeatCount="indefinite"/></circle>
-<circle cx="6" cy="105" r="1.2" fill="#94A3B8"><animate attributeName="opacity" values="0.15;0.9;0.15" dur="1.8s" repeatCount="indefinite"/></circle>
-<circle cx="15" cy="150" r="0.8" fill="#94A3B8"><animate attributeName="opacity" values="0.15;0.9;0.15" dur="3s" repeatCount="indefinite"/></circle>
-<circle cx="120" cy="155" r="1" fill="#94A3B8"><animate attributeName="opacity" values="0.15;0.9;0.15" dur="2.5s" repeatCount="indefinite"/></circle>
-<circle cx="180" cy="8" r="0.8" fill="#94A3B8"><animate attributeName="opacity" values="0.15;0.9;0.15" dur="1.9s" repeatCount="indefinite"/></circle>
-<circle cx="250" cy="162" r="1.2" fill="#94A3B8"><animate attributeName="opacity" values="0.15;0.9;0.15" dur="2.8s" repeatCount="indefinite"/></circle>
-<circle cx="340" cy="10" r="0.9" fill="#94A3B8"><animate attributeName="opacity" values="0.15;0.9;0.15" dur="2.1s" repeatCount="indefinite"/></circle>
-<circle cx="410" cy="158" r="1" fill="#94A3B8"><animate attributeName="opacity" values="0.15;0.9;0.15" dur="1.7s" repeatCount="indefinite"/></circle>
-<circle cx="490" cy="15" r="0.8" fill="#94A3B8"><animate attributeName="opacity" values="0.15;0.9;0.15" dur="2.6s" repeatCount="indefinite"/></circle>
-<circle cx="504" cy="55" r="1.2" fill="#94A3B8"><animate attributeName="opacity" values="0.15;0.9;0.15" dur="1.5s" repeatCount="indefinite"/></circle>
-<circle cx="498" cy="95" r="0.9" fill="#94A3B8"><animate attributeName="opacity" values="0.15;0.9;0.15" dur="2.3s" repeatCount="indefinite"/></circle>
-<circle cx="506" cy="140" r="1.1" fill="#94A3B8"><animate attributeName="opacity" values="0.15;0.9;0.15" dur="1.9s" repeatCount="indefinite"/></circle>
-<circle cx="45" cy="125" r="0.7" fill="#94A3B8"><animate attributeName="opacity" values="0.15;0.9;0.15" dur="3.5s" repeatCount="indefinite"/></circle>
-<circle cx="470" cy="128" r="0.8" fill="#94A3B8"><animate attributeName="opacity" values="0.15;0.9;0.15" dur="3.2s" repeatCount="indefinite"/></circle></g>
+<rect x="0" y="0" width="513" height="170" fill="#0d1117"/>
+<circle cx="8" cy="20" r="1.1" fill="#8b949e"><animate attributeName="opacity" values="0.2;1;0.2" dur="1.2s" repeatCount="indefinite"/></circle>
+<circle cx="8" cy="60" r="1.1" fill="#8b949e"><animate attributeName="opacity" values="0.2;1;0.2" dur="1.6s" repeatCount="indefinite"/></circle>
+<circle cx="8" cy="100" r="1.1" fill="#8b949e"><animate attributeName="opacity" values="0.2;1;0.2" dur="2s" repeatCount="indefinite"/></circle>
+<circle cx="505" cy="25" r="1.1" fill="#8b949e"><animate attributeName="opacity" values="0.2;1;0.2" dur="1.2s" repeatCount="indefinite"/></circle>
+<circle cx="505" cy="70" r="1.1" fill="#8b949e"><animate attributeName="opacity" values="0.2;1;0.2" dur="1.6s" repeatCount="indefinite"/></circle>
+<circle cx="505" cy="110" r="1.1" fill="#8b949e"><animate attributeName="opacity" values="0.2;1;0.2" dur="2s" repeatCount="indefinite"/></circle>
+<circle cx="30" cy="164" r="1.1" fill="#8b949e"><animate attributeName="opacity" values="0.2;1;0.2" dur="1.2s" repeatCount="indefinite"/></circle>
+<circle cx="483" cy="164" r="1.1" fill="#8b949e"><animate attributeName="opacity" values="0.2;1;0.2" dur="1.6s" repeatCount="indefinite"/></circle>
 <g id="grid">
 <rect x="20" y="15" width="11" height="11" rx="2" ry="2" fill="#ebedf0"/>
 <rect x="20" y="29" width="11" height="11" rx="2" ry="2" fill="#ebedf0"/>
@@ -49,8 +41,8 @@
 <rect x="76" y="29" width="11" height="11" rx="2" ry="2" fill="#ebedf0"/>
 <rect x="76" y="43" width="11" height="11" rx="2" ry="2" fill="#ebedf0"/>
 <rect x="76" y="57" width="11" height="11" rx="2" ry="2" fill="#ebedf0"/>
-<rect x="76" y="71" width="11" height="11" rx="2" ry="2" fill="#9be9a8"/>
-<rect x="76" y="85" width="11" height="11" rx="2" ry="2" fill="#ebedf0"/>
+<rect x="76" y="71" width="11" height="11" rx="2" ry="2" fill="#ebedf0"/>
+<rect x="76" y="85" width="11" height="11" rx="2" ry="2" fill="#9be9a8"/>
 <rect x="76" y="99" width="11" height="11" rx="2" ry="2" fill="#ebedf0"/>
 <rect x="90" y="15" width="11" height="11" rx="2" ry="2" fill="#ebedf0"/>
 <rect x="90" y="29" width="11" height="11" rx="2" ry="2" fill="#ebedf0"/>
@@ -86,7 +78,7 @@
 <rect x="146" y="57" width="11" height="11" rx="2" ry="2" fill="#ebedf0"/>
 <rect x="146" y="71" width="11" height="11" rx="2" ry="2" fill="#ebedf0"/>
 <rect x="146" y="85" width="11" height="11" rx="2" ry="2" fill="#ebedf0"/>
-<rect x="146" y="99" width="11" height="11" rx="2" ry="2" fill="#9be9a8"/>
+<rect x="146" y="99" width="11" height="11" rx="2" ry="2" fill="#ebedf0"/>
 <rect x="160" y="15" width="11" height="11" rx="2" ry="2" fill="#9be9a8"/>
 <rect x="160" y="29" width="11" height="11" rx="2" ry="2" fill="#9be9a8"/>
 <rect x="160" y="43" width="11" height="11" rx="2" ry="2" fill="#9be9a8"/>
@@ -114,7 +106,7 @@
 <rect x="202" y="57" width="11" height="11" rx="2" ry="2" fill="#ebedf0"/>
 <rect x="202" y="71" width="11" height="11" rx="2" ry="2" fill="#ebedf0"/>
 <rect x="202" y="85" width="11" height="11" rx="2" ry="2" fill="#9be9a8"/>
-<rect x="202" y="99" width="11" height="11" rx="2" ry="2" fill="#9be9a8"/>
+<rect x="202" y="99" width="11" height="11" rx="2" ry="2" fill="#ebedf0"/>
 <rect x="216" y="15" width="11" height="11" rx="2" ry="2" fill="#9be9a8"/>
 <rect x="216" y="29" width="11" height="11" rx="2" ry="2" fill="#ebedf0"/>
 <rect x="216" y="43" width="11" height="11" rx="2" ry="2" fill="#ebedf0"/>
@@ -196,16 +188,16 @@
 <rect x="370" y="29" width="11" height="11" rx="2" ry="2" fill="#ebedf0"/>
 <rect x="370" y="43" width="11" height="11" rx="2" ry="2" fill="#ebedf0"/>
 <rect x="370" y="57" width="11" height="11" rx="2" ry="2" fill="#9be9a8"/>
-<rect x="370" y="71" width="11" height="11" rx="2" ry="2" fill="#9be9a8"/>
+<rect x="370" y="71" width="11" height="11" rx="2" ry="2" fill="#ebedf0"/>
 <rect x="370" y="85" width="11" height="11" rx="2" ry="2" fill="#9be9a8"/>
-<rect x="370" y="99" width="11" height="11" rx="2" ry="2" fill="#9be9a8"/>
+<rect x="370" y="99" width="11" height="11" rx="2" ry="2" fill="#ebedf0"/>
 <rect x="384" y="15" width="11" height="11" rx="2" ry="2" fill="#9be9a8"/>
 <rect x="384" y="29" width="11" height="11" rx="2" ry="2" fill="#9be9a8"/>
 <rect x="384" y="43" width="11" height="11" rx="2" ry="2" fill="#9be9a8"/>
 <rect x="384" y="57" width="11" height="11" rx="2" ry="2" fill="#9be9a8"/>
 <rect x="384" y="71" width="11" height="11" rx="2" ry="2" fill="#9be9a8"/>
 <rect x="384" y="85" width="11" height="11" rx="2" ry="2" fill="#9be9a8"/>
-<rect x="384" y="99" width="11" height="11" rx="2" ry="2" fill="#ebedf0"/>
+<rect x="384" y="99" width="11" height="11" rx="2" ry="2" fill="#9be9a8"/>
 <rect x="398" y="15" width="11" height="11" rx="2" ry="2" fill="#ebedf0"/>
 <rect x="398" y="29" width="11" height="11" rx="2" ry="2" fill="#30a14e"/>
 <rect x="398" y="43" width="11" height="11" rx="2" ry="2" fill="#30a14e"/>
@@ -254,35 +246,21 @@
 <rect x="482" y="57" width="11" height="11" rx="2" ry="2" fill="#9be9a8"/>
 <rect x="482" y="71" width="11" height="11" rx="2" ry="2" fill="#9be9a8"/>
 <rect x="482" y="85" width="11" height="11" rx="2" ry="2" fill="#9be9a8"/>
-<rect x="482" y="99" width="11" height="11" rx="2" ry="2" fill="#30a14e"/>
+<rect x="482" y="99" width="11" height="11" rx="2" ry="2" fill="#40c463"/>
 </g>
-<g id="jet-interceptor">
-  <!-- Smooth Linear Flight Translation -->
+<g id="jet">
+  <g transform="translate(0,0)">
+    <polygon points="0,-16 8,6 4,3 -4,3 -8,6" fill="#58a6ff" stroke="#1f6feb" stroke-width="1"/>
+    <polygon points="-8,6 -14,12 -4,7" fill="#388bfd"/>
+    <polygon points="8,6 14,12 4,7" fill="#388bfd"/>
+    <circle cx="0" cy="-6" r="2.2" fill="#c9e6ff"/>
+    <polygon points="-3,7 3,7 0,15" fill="#f0883e">
+      <animate attributeName="opacity" values="0.5;1;0.6;1" dur="0.18s" repeatCount="indefinite"/>
+    </polygon>
+  </g>
   <animateTransform attributeName="transform" attributeType="XML" type="translate"
     dur="20s" repeatCount="indefinite" calcMode="linear"
     keyTimes="0;0.5;1"
-    values="25.5,142;487.5,142;25.5,142"/>
-
-  <!-- Level Jet Chassis (No Tilt) -->
-  <g id="jet-chassis">
-    <!-- Plasma Exhaust Wake -->
-    <circle cx="0" cy="14" r="3" fill="#38BDF8" opacity="0.35">
-      <animate attributeName="r" values="3;5.5;2" dur="0.22s" repeatCount="indefinite"/>
-      <animate attributeName="opacity" values="0.4;0.1;0.4" dur="0.22s" repeatCount="indefinite"/>
-    </circle>
-    <polygon points="-2.5,7 2.5,7 0,16" fill="#38BDF8">
-      <animate attributeName="points" values="-2.5,7 2.5,7 0,16; -2,7 2,7 0,19; -2.5,7 2.5,7 0,14; -2.5,7 2.5,7 0,16" dur="0.16s" repeatCount="indefinite"/>
-      <animate attributeName="fill" values="#38BDF8;#67E8F9;#F97316;#38BDF8" dur="0.32s" repeatCount="indefinite"/>
-    </polygon>
-
-    <!-- Main Fuselage -->
-    <polygon points="0,-16 7,5 3,3 -3,3 -7,5" fill="#38BDF8" stroke="#0284C7" stroke-width="0.9"/>
-    <!-- Delta Wings -->
-    <polygon points="-7,5 -14,11 -3,6" fill="#0EA5E9"/>
-    <polygon points="7,5 14,11 3,6" fill="#0EA5E9"/>
-    <!-- Cockpit Canopy -->
-    <polygon points="0,-11 2,-3 -2,-3" fill="#F0FDF4" opacity="0.95"/>
-    <circle cx="0" cy="-6" r="1.8" fill="#BAE6FD"/>
-  </g>
+    values="25.5,140;487.5,140;25.5,140"/>
 </g>
 </svg>

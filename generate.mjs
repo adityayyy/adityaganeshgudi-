@@ -293,45 +293,150 @@ export function buildGrid(cells, targets = []) {
   return svg;
 }
 
-export function buildLaserProjectiles(targets) {
-  let svg = '<g id="laser-projectiles">\n';
-  for (const t of targets) {
-    // Forward Laser Bolt
-    svg += `  <g class="laser-bolt" opacity="0">\n`;
-    svg += `    <rect x="${t.cx - 1.5}" y="0" width="3" height="18" rx="1.5" fill="#FFFFFF" stroke="#38BDF8" stroke-width="1"/>\n`;
-    svg += `    <animateTransform attributeName="transform" type="translate" dur="18s" repeatCount="indefinite" values="0,250; 0,${t.cy}" keyTimes="${t.k_launch_fwd.toFixed(4)}; ${t.k_hit_fwd.toFixed(4)}" fill="remove"/>\n`;
-    svg += `    <animate attributeName="opacity" dur="18s" repeatCount="indefinite" calcMode="discrete" values="0; 1; 0; 0" keyTimes="0; ${t.k_launch_fwd.toFixed(4)}; ${t.k_hit_fwd.toFixed(4)}; 1"/>\n`;
-    svg += `  </g>\n`;
+export function buildDynamicReticle(targets = []) {
+  // Build keyframe Y translations so the crosshair tracks the exact row height of each target
+  const keyTimesArr = [0];
+  const valuesArr = ["0,-130"]; // default elevation
 
-    // Return Laser Bolt
-    svg += `  <g class="laser-bolt" opacity="0">\n`;
-    svg += `    <rect x="${t.cx - 1.5}" y="0" width="3" height="18" rx="1.5" fill="#FFFFFF" stroke="#38BDF8" stroke-width="1"/>\n`;
-    svg += `    <animateTransform attributeName="transform" type="translate" dur="18s" repeatCount="indefinite" values="0,250; 0,${t.cy}" keyTimes="${t.k_launch_ret.toFixed(4)}; ${t.k_hit_ret.toFixed(4)}" fill="remove"/>\n`;
-    svg += `    <animate attributeName="opacity" dur="18s" repeatCount="indefinite" calcMode="discrete" values="0; 1; 0; 0" keyTimes="0; ${t.k_launch_ret.toFixed(4)}; ${t.k_hit_ret.toFixed(4)}; 1"/>\n`;
-    svg += `  </g>\n`;
+  if (targets.length > 0) {
+    // Forward pass keyframes
+    targets.forEach(t => {
+      const relY = Math.round(t.cy - 270);
+      keyTimesArr.push(Number(t.k_launch_fwd.toFixed(4)));
+      valuesArr.push(`0,${relY}`);
+      keyTimesArr.push(Number(t.k_settle_fwd.toFixed(4)));
+      valuesArr.push(`0,${relY}`);
+    });
+
+    keyTimesArr.push(0.5);
+    valuesArr.push(`0,${Math.round(targets[targets.length - 1].cy - 270)}`);
+
+    // Return pass keyframes (reverse order)
+    const revTargets = [...targets].reverse();
+    revTargets.forEach(t => {
+      const relY = Math.round(t.cy - 270);
+      keyTimesArr.push(Number(t.k_launch_ret.toFixed(4)));
+      valuesArr.push(`0,${relY}`);
+      keyTimesArr.push(Number(t.k_settle_ret.toFixed(4)));
+      valuesArr.push(`0,${relY}`);
+    });
   }
-  svg += '</g>\n';
-  return svg;
+
+  keyTimesArr.push(1);
+  valuesArr.push("0,-130");
+
+  // Ensure monotonic ascending keyTimes
+  const cleanKeyTimes = [];
+  const cleanValues = [];
+  let lastTime = -1;
+  for (let i = 0; i < keyTimesArr.length; i++) {
+    const cur = keyTimesArr[i];
+    if (cur > lastTime && cur <= 1) {
+      cleanKeyTimes.push(cur.toFixed(4));
+      cleanValues.push(valuesArr[i]);
+      lastTime = cur;
+    }
+  }
+  if (cleanKeyTimes[cleanKeyTimes.length - 1] !== "1.0000") {
+    cleanKeyTimes.push("1.0000");
+    cleanValues.push(cleanValues[cleanValues.length - 1] || "0,-130");
+  }
+
+  const kTimesStr = cleanKeyTimes.join("; ");
+  const valsStr = cleanValues.join("; ");
+
+  return `<g id="targeting-reticle">
+  <g class="reticle-tracker">
+    <!-- Sighting Laser Guide connecting starfighter to target node -->
+    <line x1="0" y1="0" x2="0" y2="240" stroke="#22D3EE" stroke-width="1.2" stroke-dasharray="4 3" class="sighting-laser" opacity="0.65"/>
+    
+    <!-- Outer Rotating Cyan HUD Ring -->
+    <circle cx="0" cy="0" r="26" fill="none" stroke="#22D3EE" stroke-width="1.2" stroke-dasharray="8 4" opacity="0.8">
+      <animateTransform attributeName="transform" type="rotate" from="0 0 0" to="360 0 0" dur="8s" repeatCount="indefinite"/>
+    </circle>
+
+    <!-- Inner Target Locking Emerald/Gold Ring -->
+    <circle cx="0" cy="0" r="16" fill="none" stroke="#4ADE80" stroke-width="1.8" stroke-dasharray="4 2">
+      <animate attributeName="r" values="15;21;15" dur="1.2s" repeatCount="indefinite"/>
+      <animate attributeName="stroke" values="#4ADE80;#FACC15;#4ADE80" dur="1.2s" repeatCount="indefinite"/>
+    </circle>
+
+    <!-- Directional Crosshair Ticks -->
+    <line x1="0" y1="-32" x2="0" y2="-20" stroke="#4ADE80" stroke-width="1.8"/>
+    <line x1="0" y1="20" x2="0" y2="32" stroke="#4ADE80" stroke-width="1.8"/>
+    <line x1="-32" y1="0" x2="-20" y2="0" stroke="#4ADE80" stroke-width="1.8"/>
+    <line x1="20" y1="0" x2="32" y2="0" stroke="#4ADE80" stroke-width="1.8"/>
+
+    <!-- Flashing Center Lock-On Pip -->
+    <circle cx="0" cy="0" r="2.5" fill="#FACC15">
+      <animate attributeName="opacity" values="1;0.2;1" dur="0.4s" repeatCount="indefinite"/>
+    </circle>
+
+    <!-- Dynamic Y-Axis Tracking Animation Locked to Active Row Height -->
+    <animateTransform attributeName="transform" type="translate" dur="18s" repeatCount="indefinite" values="${valsStr}" keyTimes="${kTimesStr}"/>
+  </g>
+</g>`;
 }
 
-export function buildImpactBursts(targets) {
-  let svg = '<g id="impact-bursts">\n';
+export function buildProminentRailguns() {
+  return `<g id="prominent-railguns">
+  <!-- Left Heavy Plasma Railgun Beam (6px wide, white core, cyan glow aura) -->
+  <g class="plasma-beam" filter="url(#softGlow)" opacity="0">
+    <rect x="-23" y="-40" width="6" height="40" rx="3" fill="#FFFFFF" stroke="#38BDF8" stroke-width="1.5"/>
+    <polygon points="-24,0 -20,0 -22,16" fill="#FACC15"/>
+    <animateTransform attributeName="transform" type="translate" dur="1.8s" repeatCount="indefinite" values="0,0; 0,-260" keyTimes="0; 0.16" fill="remove"/>
+    <animate attributeName="opacity" dur="1.8s" repeatCount="indefinite" calcMode="discrete" values="0; 1; 0; 0" keyTimes="0; 0.02; 0.16; 1"/>
+  </g>
+
+  <!-- Right Heavy Plasma Railgun Beam (6px wide, white core, cyan glow aura) -->
+  <g class="plasma-beam" filter="url(#softGlow)" opacity="0">
+    <rect x="17" y="-40" width="6" height="40" rx="3" fill="#FFFFFF" stroke="#38BDF8" stroke-width="1.5"/>
+    <polygon points="16,0 20,0 18,16" fill="#FACC15"/>
+    <animateTransform attributeName="transform" type="translate" dur="1.8s" repeatCount="indefinite" values="0,0; 0,-260" keyTimes="0; 0.16" fill="remove"/>
+    <animate attributeName="opacity" dur="1.8s" repeatCount="indefinite" calcMode="discrete" values="0; 1; 0; 0" keyTimes="0; 0.02; 0.16; 1"/>
+  </g>
+
+  <!-- Alternating Center Twin Heavy Blaster Cannons -->
+  <g class="plasma-beam" filter="url(#softGlow)" opacity="0">
+    <rect x="-8.5" y="-34" width="5" height="34" rx="2.5" fill="#FFFFFF" stroke="#4ADE80" stroke-width="1.4"/>
+    <rect x="3.5" y="-34" width="5" height="34" rx="2.5" fill="#FFFFFF" stroke="#4ADE80" stroke-width="1.4"/>
+    <polygon points="-9,0 -5,0 -7,14" fill="#FACC15"/>
+    <polygon points="3,0 7,0 5,14" fill="#FACC15"/>
+    <animateTransform attributeName="transform" type="translate" dur="1.8s" repeatCount="indefinite" values="0,0; 0,-260" keyTimes="0.5; 0.66" fill="remove"/>
+    <animate attributeName="opacity" dur="1.8s" repeatCount="indefinite" calcMode="discrete" values="0; 0; 1; 0; 0" keyTimes="0; 0.50; 0.52; 0.66; 1"/>
+  </g>
+</g>`;
+}
+
+export function buildExplosiveImpacts(targets) {
+  let svg = '<g id="explosive-impacts">\n';
   for (const t of targets) {
-    svg += `  <g class="impact-burst">\n`;
-    svg += `    <circle cx="${t.cx}" cy="${t.cy}" r="0" fill="none" stroke="#FACC15" stroke-width="1.6" opacity="0">\n`;
-    svg += `      <animate attributeName="r" dur="18s" repeatCount="indefinite" values="0; 0; 2; 14; 0; 0; 2; 14; 0" keyTimes="0; ${t.k_launch_fwd.toFixed(4)}; ${t.k_hit_fwd.toFixed(4)}; ${t.k_settle_fwd.toFixed(4)}; ${(t.k_settle_fwd + 0.001).toFixed(4)}; ${t.k_launch_ret.toFixed(4)}; ${t.k_hit_ret.toFixed(4)}; ${t.k_settle_ret.toFixed(4)}; 1"/>\n`;
+    svg += `  <g class="explosive-impact">\n`;
+    // Primary Expanding Gold Shockwave
+    svg += `    <circle cx="${t.cx}" cy="${t.cy}" r="0" fill="none" stroke="#FACC15" stroke-width="2.5" class="shockwave-primary" opacity="0">\n`;
+    svg += `      <animate attributeName="r" dur="18s" repeatCount="indefinite" values="0; 0; 3; 28; 0; 0; 3; 28; 0" keyTimes="0; ${t.k_launch_fwd.toFixed(4)}; ${t.k_hit_fwd.toFixed(4)}; ${t.k_settle_fwd.toFixed(4)}; ${(t.k_settle_fwd + 0.001).toFixed(4)}; ${t.k_launch_ret.toFixed(4)}; ${t.k_hit_ret.toFixed(4)}; ${t.k_settle_ret.toFixed(4)}; 1"/>\n`;
     svg += `      <animate attributeName="opacity" dur="18s" repeatCount="indefinite" values="0; 0; 1; 0; 0; 0; 1; 0; 0" keyTimes="0; ${t.k_launch_fwd.toFixed(4)}; ${t.k_hit_fwd.toFixed(4)}; ${t.k_settle_fwd.toFixed(4)}; ${(t.k_settle_fwd + 0.001).toFixed(4)}; ${t.k_launch_ret.toFixed(4)}; ${t.k_hit_ret.toFixed(4)}; ${t.k_settle_ret.toFixed(4)}; 1"/>\n`;
     svg += `    </circle>\n`;
-    svg += `    <circle cx="${t.cx}" cy="${t.cy}" r="0" fill="none" stroke="#38BDF8" stroke-width="1.2" opacity="0">\n`;
-    svg += `      <animate attributeName="r" dur="18s" repeatCount="indefinite" values="0; 0; 4; 22; 0; 0; 4; 22; 0" keyTimes="0; ${t.k_launch_fwd.toFixed(4)}; ${t.k_hit_fwd.toFixed(4)}; ${t.k_settle_fwd.toFixed(4)}; ${(t.k_settle_fwd + 0.001).toFixed(4)}; ${t.k_launch_ret.toFixed(4)}; ${t.k_hit_ret.toFixed(4)}; ${t.k_settle_ret.toFixed(4)}; 1"/>\n`;
-    svg += `      <animate attributeName="opacity" dur="18s" repeatCount="indefinite" values="0; 0; 0.8; 0; 0; 0; 0.8; 0; 0" keyTimes="0; ${t.k_launch_fwd.toFixed(4)}; ${t.k_hit_fwd.toFixed(4)}; ${t.k_settle_fwd.toFixed(4)}; ${(t.k_settle_fwd + 0.001).toFixed(4)}; ${t.k_launch_ret.toFixed(4)}; ${t.k_hit_ret.toFixed(4)}; ${t.k_settle_ret.toFixed(4)}; 1"/>\n`;
+
+    // Secondary Expanding Cyan Shockwave
+    svg += `    <circle cx="${t.cx}" cy="${t.cy}" r="0" fill="none" stroke="#38BDF8" stroke-width="2.0" class="shockwave-secondary" opacity="0">\n`;
+    svg += `      <animate attributeName="r" dur="18s" repeatCount="indefinite" values="0; 0; 5; 36; 0; 0; 5; 36; 0" keyTimes="0; ${t.k_launch_fwd.toFixed(4)}; ${t.k_hit_fwd.toFixed(4)}; ${t.k_settle_fwd.toFixed(4)}; ${(t.k_settle_fwd + 0.001).toFixed(4)}; ${t.k_launch_ret.toFixed(4)}; ${t.k_hit_ret.toFixed(4)}; ${t.k_settle_ret.toFixed(4)}; 1"/>\n`;
+    svg += `      <animate attributeName="opacity" dur="18s" repeatCount="indefinite" values="0; 0; 0.9; 0; 0; 0; 0.9; 0; 0" keyTimes="0; ${t.k_launch_fwd.toFixed(4)}; ${t.k_hit_fwd.toFixed(4)}; ${t.k_settle_fwd.toFixed(4)}; ${(t.k_settle_fwd + 0.001).toFixed(4)}; ${t.k_launch_ret.toFixed(4)}; ${t.k_hit_ret.toFixed(4)}; ${t.k_settle_ret.toFixed(4)}; 1"/>\n`;
     svg += `    </circle>\n`;
+
+    // 8-Point Radiating Spark Lines
+    svg += `    <g class="spark-star" opacity="0">\n`;
+    svg += `      <line x1="${t.cx - 24}" y1="${t.cy}" x2="${t.cx + 24}" y2="${t.cy}" stroke="#FFFFFF" stroke-width="1.8"/>\n`;
+    svg += `      <line x1="${t.cx}" y1="${t.cy - 24}" x2="${t.cx}" y2="${t.cy + 24}" stroke="#FFFFFF" stroke-width="1.8"/>\n`;
+    svg += `      <line x1="${t.cx - 16}" y1="${t.cy - 16}" x2="${t.cx + 16}" y2="${t.cy + 16}" stroke="#4ADE80" stroke-width="1.4"/>\n`;
+    svg += `      <line x1="${t.cx - 16}" y1="${t.cy + 16}" x2="${t.cx + 16}" y2="${t.cy - 16}" stroke="#4ADE80" stroke-width="1.4"/>\n`;
+    svg += `      <animate attributeName="opacity" dur="18s" repeatCount="indefinite" values="0; 0; 1; 0; 0; 0; 1; 0; 0" keyTimes="0; ${t.k_launch_fwd.toFixed(4)}; ${t.k_hit_fwd.toFixed(4)}; ${t.k_mid_fwd.toFixed(4)}; ${(t.k_mid_fwd + 0.001).toFixed(4)}; ${t.k_launch_ret.toFixed(4)}; ${t.k_hit_ret.toFixed(4)}; ${t.k_mid_ret.toFixed(4)}; 1"/>\n`;
+    svg += `    </g>\n`;
     svg += `  </g>\n`;
   }
   svg += '</g>\n';
   return svg;
 }
-
 export function buildMonthLabels() {
   let svg = "";
   const monthCols = [0, 4, 9, 13, 17, 22, 26, 30, 35, 39, 43, 48];
@@ -388,27 +493,13 @@ export function buildLegend() {
   return svg;
 }
 
-export function buildArcadeStarfighter() {
+export function buildArcadeStarfighter(targets = []) {
   return `<g id="starfighter">
-  <!-- Holographic Target Locking Reticle Locked over Matrix Grid -->
-  <g id="targeting-reticle">
-    <circle cx="0" cy="-120" r="18" fill="none" stroke="#4ADE80" stroke-width="1.2" stroke-dasharray="4 2" class="reticle-ring">
-      <animate attributeName="r" values="16;22;16" dur="1.8s" repeatCount="indefinite"/>
-      <animate attributeName="opacity" values="0.45;0.95;0.45" dur="1.8s" repeatCount="indefinite"/>
-    </circle>
-    <circle cx="0" cy="-120" r="28" fill="none" stroke="#22D3EE" stroke-width="1" opacity="0.65" stroke-dasharray="8 4">
-      <animateTransform attributeName="transform" type="rotate" from="0 0 -120" to="360 0 -120" dur="10s" repeatCount="indefinite"/>
-    </circle>
-    <!-- Crosshair Directional Ticks -->
-    <line x1="0" y1="-152" x2="0" y2="-140" stroke="#4ADE80" stroke-width="1.5" class="reticle-tick"/>
-    <line x1="0" y1="-100" x2="0" y2="-88" stroke="#4ADE80" stroke-width="1.5" class="reticle-tick"/>
-    <line x1="-32" y1="-120" x2="-20" y2="-120" stroke="#4ADE80" stroke-width="1.5" class="reticle-tick"/>
-    <line x1="20" y1="-120" x2="32" y2="-120" stroke="#4ADE80" stroke-width="1.5" class="reticle-tick"/>
-    <!-- Lock-on Center Pip -->
-    <circle cx="0" cy="-120" r="2.2" fill="#86EFAC">
-      <animate attributeName="opacity" values="1;0.2;1" dur="0.5s" repeatCount="indefinite"/>
-    </circle>
-  </g>
+  <!-- Prominent Dual Plasma Railguns (Tethered to Starfighter for 100% Synchronization) -->
+  ${buildProminentRailguns()}
+
+  <!-- Dynamic Target-Tracking Reticle with Sighting Laser Guide -->
+  ${buildDynamicReticle(targets)}
 
   <!-- Dual-Hull Arcade Starfighter Chassis -->
   <g transform="translate(0,0)">
@@ -574,16 +665,15 @@ ${buildDayLabels()}
 <g id="grid">
 ${buildGrid(cells, targets)}</g>
 
-<!-- Combat Layer: Live Laser Projectiles & Impact Shockwaves -->
-${buildLaserProjectiles(targets)}
-${buildImpactBursts(targets)}
+<!-- Explosive Impact Detonations on Struck Cells -->
+${buildExplosiveImpacts(targets)}
 
 <!-- Bottom HUD Legend & Defense Grid Metadata -->
 ${buildLegend()}
 <text x="${WIDTH - 140}" y="${HEIGHT - 12}" class="hud-meta" text-anchor="end">[ARCADE DEFENSE GRID // SECTOR: PRATIK-FORGE]</text>
 
-<!-- Dual-Hull Starfighter Jet & Holographic Target Lock-On -->
-${buildArcadeStarfighter()}
+<!-- Dual-Hull Starfighter Jet & Dynamic Target Tracking Reticle -->
+${buildArcadeStarfighter(targets)}
 </svg>`;
 }
 

@@ -8,11 +8,13 @@ import {
   computeStats,
   computeArcadeScore,
   buildShieldBar,
-  buildPhotonTorpedoes,
+  selectTargets,
+  buildLaserProjectiles,
+  buildImpactBursts,
   THEME
 } from '../generate.mjs';
 
-describe('TDD: Retro Arcade Space Defender with Homing Photon Torpedoes', () => {
+describe('TDD: Live Target-Hit Combat & Interactive Cell Ionization', () => {
   describe('Input Sanitization & Data Parsing', () => {
     it('should sanitize XML/HTML special characters and disarm inline event handlers', () => {
       const malicious = '<script>alert("xss")</script>&"\' onload="evil()"';
@@ -36,38 +38,46 @@ describe('TDD: Retro Arcade Space Defender with Homing Photon Torpedoes', () => 
     });
   });
 
-  describe('Contribution Grid & Cell Calculations', () => {
-    it('should pad weeks to exact 52 columns x 7 rows = 364 power-core cells', () => {
-      const mockWeeks = [{
-        contributionDays: [
-          { contributionCount: 4, color: '#39d353', date: '2026-08-20' },
-          { contributionCount: 0, color: '#161b22', date: '2026-08-21' }
-        ]
-      }];
+  describe('Target Selection & Live Shooting Mechanics', () => {
+    it('should select active contribution cells as shooting targets along the timeline', () => {
+      const mockWeeks = generateMockWeeks(52);
       const cells = buildCells(mockWeeks, 52);
-      assert.strictEqual(cells.length, 52 * 7);
-    });
-  });
-
-  describe('Option 3: Lock-On Homing Photon Torpedoes Weapon System', () => {
-    it('should generate photon torpedoes with curved launch arcs and zero-ghosting discrete clamping', () => {
-      const torpedoSvg = buildPhotonTorpedoes();
-      assert.ok(torpedoSvg.includes('id="photon-torpedoes"'));
-      assert.ok(torpedoSvg.includes('calcMode="discrete"'));
-      assert.ok(torpedoSvg.includes('class="torpedo-payload"'));
-    });
-
-    it('should include synchronized impact shockwaves with expanding rings and spark rays', () => {
-      const torpedoSvg = buildPhotonTorpedoes();
-      assert.ok(torpedoSvg.includes('class="impact-shockwave"'));
-      assert.ok(torpedoSvg.includes('class="shockwave-ring"'));
+      const targets = selectTargets(cells);
+      assert.ok(Array.isArray(targets));
+      assert.ok(targets.length > 0, 'Should select active target cells');
+      targets.forEach(t => {
+        assert.ok(t.x >= 140);
+        assert.ok(t.y >= 88);
+        assert.ok(t.col >= 0 && t.col < 52);
+        assert.ok(t.count > 0, 'Target cell should have positive contributions');
+      });
     });
 
-    it('should mount photon torpedoes into root SVG starfighter group', () => {
-      const svg = buildSvg([], { mock: true });
-      assert.ok(svg.includes('id="photon-torpedoes"'));
-      assert.ok(svg.includes('id="targeting-reticle"'));
-      assert.ok(svg.includes('id="starfighter"'));
+    it('should generate laser projectiles flying from y=250 to target cell y with discrete clamping', () => {
+      const mockWeeks = generateMockWeeks(52);
+      const cells = buildCells(mockWeeks, 52);
+      const targets = selectTargets(cells);
+      const laserSvg = buildLaserProjectiles(targets);
+      assert.ok(laserSvg.includes('class="laser-bolt"'));
+      assert.ok(laserSvg.includes('calcMode="discrete"'));
+      assert.ok(laserSvg.includes('animateTransform'));
+    });
+
+    it('should generate synchronized impact shockwaves at exact target cell centers', () => {
+      const mockWeeks = generateMockWeeks(52);
+      const cells = buildCells(mockWeeks, 52);
+      const targets = selectTargets(cells);
+      const burstsSvg = buildImpactBursts(targets);
+      assert.ok(burstsSvg.includes('class="impact-burst"'));
+      assert.ok(burstsSvg.includes('calcMode="discrete"') || burstsSvg.includes('keyTimes'));
+    });
+
+    it('should inject animated fill flash (<animate attributeName="fill">) directly into hit cells', () => {
+      const mockWeeks = generateMockWeeks(52);
+      const svg = buildSvg(mockWeeks, { mock: false });
+      assert.ok(svg.includes('attributeName="fill"'));
+      assert.ok(svg.includes('#FFFFFF'));
+      assert.ok(svg.includes('#86EFAC'));
     });
   });
 

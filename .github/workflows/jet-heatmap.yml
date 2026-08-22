@@ -5,12 +5,6 @@ on:
     # Runs daily at midnight UTC
     - cron: "0 0 * * *"
   workflow_dispatch: {}
-  push:
-    branches:
-      - main
-    paths:
-      - "generate.mjs"
-      - ".github/workflows/jet-heatmap.yml"
 
 permissions:
   contents: write
@@ -19,13 +13,13 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout
+      - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Set up Node
+      - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 22
 
       - name: Generate SVG
         env:
@@ -35,7 +29,13 @@ jobs:
         run: node generate.mjs
 
       - name: Commit and push if changed
-        uses: stefanzweifel/git-auto-commit-action@v5
-        with:
-          commit_message: "chore: auto-sync jet heatmap SVG [skip ci]"
-          file_pattern: github-jet.svg
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add github-jet.svg
+          if git diff --staged --quiet; then
+            echo "No changes to commit"
+          else
+            git commit -m "chore: auto-sync jet heatmap SVG [skip ci]"
+            git push origin main
+          fi

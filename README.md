@@ -1,8 +1,8 @@
 <a href="https://github.com/pratikforge/pratikforge">
   <picture>
-    <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/pratikforge/pratikforge/main/dark.svg?v=11">
-    <source media="(prefers-color-scheme: light)" srcset="https://raw.githubusercontent.com/pratikforge/pratikforge/main/light.svg?v=11">
-    <img alt="GitHub Profile README" src="https://raw.githubusercontent.com/pratikforge/pratikforge/main/dark.svg?v=11" width="100%">
+    <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/pratikforge/pratikforge/main/dark.svg?v=12">
+    <source media="(prefers-color-scheme: light)" srcset="https://raw.githubusercontent.com/pratikforge/pratikforge/main/light.svg?v=12">
+    <img alt="GitHub Profile README" src="https://raw.githubusercontent.com/pratikforge/pratikforge/main/dark.svg?v=12" width="100%">
   </picture>
 </a>
 <br>

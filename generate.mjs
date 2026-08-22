@@ -4,8 +4,8 @@
  * user's REAL contribution calendar (last 34 weeks, same layout as
  * GitHub's own heatmap: 34 columns x 7 rows).
  *
- * Mathematically locked jet-bullet synchronization:
- * Bullets spawn directly at the tip of the jet when the jet passes under each target column.
+ * Fixed strict SMIL zero-opacity clamping:
+ * Bullets are 100% invisible until the exact millisecond the jet is underneath them.
  */
 
 import fs from "node:fs";
@@ -26,7 +26,7 @@ const HEIGHT = 170;
 const JET_X_START = GRID_X + CELL / 2; // 25.5
 const JET_X_END = GRID_X + (COLS - 1) * STEP + CELL / 2; // 487.5
 const JET_Y = 140;
-const JET_NOSE_Y = 124; // top tip of jet (polygon points="0,-16") -> 140 - 16 = 124
+const JET_NOSE_Y = 124; // tip of jet (140 - 16 = 124)
 const LOOP_DUR = 20; // seconds, one full there-and-back pass
 const MAX_TARGETS = 12; // how many "busiest" days the jet fires on
 const FLASH_COLOR = "#39d353";
@@ -135,15 +135,20 @@ function buildGrid(cells, targets) {
       svg += `<rect x="${c.x.toFixed(2)}" y="${c.y.toFixed(2)}" width="${CELL}" height="${CELL}" rx="2" ry="2" fill="${c.color}"/>\n`;
       continue;
     }
-    // Arrive times: when bullet hits the cell on forward and backward pass
+    // Impact times
     const tFwd = timeWhenJetAtCol(c.col, "forward") + travelDur;
     const tBack = timeWhenJetAtCol(c.col, "backward") + travelDur;
     const [t1, t2] = [Math.min(tFwd, tBack), Math.max(tFwd, tBack)];
     
+    const t1Pre = Math.max(0, t1 - 0.0002);
+    const t1End = t1 + flashDur;
+    const t2Pre = Math.max(0, t2 - 0.0002);
+    const t2End = t2 + flashDur;
+
     svg += `<rect x="${c.x.toFixed(2)}" y="${c.y.toFixed(2)}" width="${CELL}" height="${CELL}" rx="2" ry="2" fill="${c.color}">` +
       `<animate attributeName="fill" dur="${LOOP_DUR}s" repeatCount="indefinite" ` +
-      `keyTimes="0;${fmt(t1)};${fmt(t1 + flashDur)};${fmt(t2)};${fmt(t2 + flashDur)};1" ` +
-      `values="${c.color};${c.color};${FLASH_COLOR};${c.color};${FLASH_COLOR};${c.color}"/>` +
+      `keyTimes="0;${fmt(t1Pre)};${fmt(t1)};${fmt(t1End)};${fmt(t2Pre)};${fmt(t2)};${fmt(t2End)};1" ` +
+      `values="${c.color};${c.color};${FLASH_COLOR};${c.color};${c.color};${FLASH_COLOR};${c.color};${c.color}"/>` +
       `</rect>\n`;
   }
   return svg;
@@ -152,33 +157,41 @@ function buildGrid(cells, targets) {
 function buildBulletsAndBlasts(targets) {
   let bullets = "";
   let blasts = "";
-  const travelDur = 0.010; // time in fraction of LOOP_DUR to fly upward
-  const blastDur = 0.014;
+  const travelDur = 0.010; // bullet flight duration
+  const blastDur = 0.012; // blast expansion duration
 
   for (const dir of ["forward", "backward"]) {
     const ordered = dir === "forward" ? targets : [...targets].reverse();
     for (const c of ordered) {
       const tLaunch = timeWhenJetAtCol(c.col, dir);
+      const tPreLaunch = Math.max(0, tLaunch - 0.0002);
       const tArrive = tLaunch + travelDur;
-      const tFade = tArrive + 0.002;
+      const tFade = tArrive + 0.001;
+      const tPostFade = Math.min(1, tFade + 0.0002);
       
       const cx = fmt(c.x + CELL / 2);
       const targetY = fmt(c.y + CELL / 2);
 
-      // Bullet starts exactly at JET_NOSE_Y at tLaunch when jet is directly at cx
-      bullets += `<circle cx="${cx}" cy="${JET_NOSE_Y}" r="2.4" fill="${BULLET_COLOR}">` +
+      // Bullet: STRICT 0 opacity before tLaunch and after tFade
+      bullets += `<circle cx="${cx}" cy="${JET_NOSE_Y}" r="2.4" fill="${BULLET_COLOR}" opacity="0">` +
         `<animate attributeName="cy" dur="${LOOP_DUR}s" repeatCount="indefinite" ` +
         `keyTimes="0;${fmt(tLaunch)};${fmt(tArrive)};1" values="${JET_NOSE_Y};${JET_NOSE_Y};${targetY};${targetY}"/>` +
         `<animate attributeName="opacity" dur="${LOOP_DUR}s" repeatCount="indefinite" ` +
-        `keyTimes="0;${fmt(tLaunch)};${fmt(tArrive)};${fmt(tFade)};1" values="0;1;1;0;0"/>` +
+        `keyTimes="0;${fmt(tPreLaunch)};${fmt(tLaunch)};${fmt(tArrive)};${fmt(tFade)};${fmt(tPostFade)};1" ` +
+        `values="0;0;1;1;0;0;0"/>` +
         `</circle>\n`;
 
-      // Blast wave expands at target point immediately upon arrival
+      // Blast: STRICT 0 opacity until bullet hits at tArrive
+      const tPreArrive = Math.max(0, tArrive - 0.0002);
+      const tBlastEnd = tArrive + blastDur;
+      const tPostBlast = Math.min(1, tBlastEnd + 0.0002);
+
       blasts += `<circle cx="${cx}" cy="${targetY}" r="0" fill="none" stroke="${BLAST_COLOR}" stroke-width="1.6" opacity="0">` +
         `<animate attributeName="r" dur="${LOOP_DUR}s" repeatCount="indefinite" ` +
-        `keyTimes="0;${fmt(tArrive)};${fmt(tArrive + blastDur)};1" values="0;1;9;9"/>` +
+        `keyTimes="0;${fmt(tArrive)};${fmt(tBlastEnd)};1" values="0;1;9;9"/>` +
         `<animate attributeName="opacity" dur="${LOOP_DUR}s" repeatCount="indefinite" ` +
-        `keyTimes="0;${fmt(tArrive)};${fmt(tArrive + blastDur)};1" values="0;1;1;0"/>` +
+        `keyTimes="0;${fmt(tPreArrive)};${fmt(tArrive)};${fmt(tBlastEnd)};${fmt(tPostBlast)};1" ` +
+        `values="0;0;1;0;0;0"/>` +
         `</circle>\n`;
     }
   }

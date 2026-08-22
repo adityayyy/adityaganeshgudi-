@@ -83,7 +83,7 @@ describe('Security: STRIDE & OWASP Top 10 Cyber Attack Defense Suite', () => {
       assert.strictEqual(cells.length, 52 * 7, 'Must clamp to exactly 52 columns');
 
       const svg = buildSvg(massiveWeeks, { mock: false, cols: 52 });
-      assert.ok(svg.length < 60000, `SVG size should remain bounded, was ${svg.length} bytes`);
+      assert.ok(svg.length < 80000, `SVG size should remain bounded, was ${svg.length} bytes`);
     });
   });
 

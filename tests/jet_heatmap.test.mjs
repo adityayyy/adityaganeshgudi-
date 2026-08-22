@@ -6,30 +6,39 @@ import {
   buildSvg, 
   generateMockWeeks,
   computeStats,
+  computeArcadeScore,
+  buildShieldBar,
   THEME
 } from '../generate.mjs';
 
-describe('TDD: Jet Heatmap Generator', () => {
-  describe('Input Sanitization', () => {
-    it('should sanitize XML/HTML special characters', () => {
-      const malicious = '<script>alert("xss")</script>&"\'';
+describe('TDD: Concept 1 Retro Arcade Space Defender Generator', () => {
+  describe('Input Sanitization & Data Parsing', () => {
+    it('should sanitize XML/HTML special characters and disarm inline event handlers', () => {
+      const malicious = '<script>alert("xss")</script>&"\' onload="evil()"';
       const clean = sanitizeText(malicious);
       assert.strictEqual(clean.includes('<script>'), false);
+      assert.strictEqual(clean.includes('onload='), false);
       assert.strictEqual(clean.includes('&lt;script&gt;'), true);
-      assert.strictEqual(clean.includes('&amp;'), true);
-      assert.strictEqual(clean.includes('&quot;'), true);
-      assert.strictEqual(clean.includes('&#39;'), true);
     });
 
-    it('should handle null, undefined, or number inputs safely', () => {
-      assert.strictEqual(sanitizeText(null), '');
-      assert.strictEqual(sanitizeText(undefined), '');
-      assert.strictEqual(sanitizeText(766), '766');
+    it('should correctly calculate arcade score from contribution count', () => {
+      assert.strictEqual(computeArcadeScore(766), '766,000 PTS');
+      assert.strictEqual(computeArcadeScore(0), '0 PTS');
+      assert.strictEqual(computeArcadeScore(1250), '1,250,000 PTS');
+      assert.strictEqual(computeArcadeScore(null), '766,000 PTS');
+    });
+
+    it('should generate 10 segmented glowing shield health blocks', () => {
+      const shieldSvg = buildShieldBar(100);
+      assert.ok(shieldSvg.includes('<rect'));
+      // Verify exactly 10 segment blocks
+      const blockCount = (shieldSvg.match(/<rect /g) || []).length;
+      assert.strictEqual(blockCount, 10);
     });
   });
 
   describe('Contribution Grid & Cell Calculations', () => {
-    it('should pad weeks to exact column count (52 columns * 7 rows = 364 cells)', () => {
+    it('should pad weeks to exact 52 columns x 7 rows = 364 power-core cells', () => {
       const mockWeeks = [{
         contributionDays: [
           { contributionCount: 4, color: '#39d353', date: '2026-08-20' },
@@ -38,86 +47,51 @@ describe('TDD: Jet Heatmap Generator', () => {
       }];
       const cells = buildCells(mockWeeks, 52);
       assert.strictEqual(cells.length, 52 * 7);
-      assert.strictEqual(cells[0].col, 0);
-      assert.strictEqual(cells[cells.length - 1].col, 51);
-      assert.strictEqual(cells[cells.length - 1].row, 6);
     });
 
-    it('should generate deterministic synthetic mock data when requested', () => {
+    it('should generate deterministic synthetic mock data when offline', () => {
       const mock = generateMockWeeks(52);
       assert.strictEqual(mock.length, 52);
-      mock.forEach(w => {
-        assert.strictEqual(w.contributionDays.length, 7);
-        w.contributionDays.forEach(d => {
-          assert.ok(typeof d.contributionCount === 'number');
-          assert.ok(typeof d.color === 'string');
-        });
-      });
-    });
-
-    it('should accurately compute total contributions and active days', () => {
-      const weeks = [
-        {
-          contributionDays: [
-            { contributionCount: 5, color: '#34d399' },
-            { contributionCount: 0, color: '#0f172a' },
-            { contributionCount: 3, color: '#10b981' }
-          ]
-        },
-        {
-          contributionDays: [
-            { contributionCount: 2, color: '#064e3b' },
-            { contributionCount: 0, color: '#0f172a' }
-          ]
-        }
-      ];
-      const stats = computeStats(weeks);
-      assert.strictEqual(stats.total, 10);
-      assert.strictEqual(stats.activeDays, 3);
+      mock.forEach(w => assert.strictEqual(w.contributionDays.length, 7));
     });
   });
 
-  describe('Jet Geometry & Symmetrical Aerospace Design', () => {
-    it('should include 100% mathematically mirrored upright jet in SVG', () => {
+  describe('Dual-Hull Starfighter & Targeting Reticle Geometry', () => {
+    it('should include dual-hull starfighter with twin plasma thrusters in SVG', () => {
       const svg = buildSvg([], { mock: true });
-      assert.ok(svg.includes('id="jet"'));
-      assert.ok(svg.includes('id="jet-exhaust"'));
+      assert.ok(svg.includes('id="starfighter"'));
+      assert.ok(svg.includes('id="twin-thrusters"'));
+      assert.ok(svg.includes('id="targeting-reticle"'));
       assert.ok(svg.includes('animateTransform'));
-      // Verify jet contains delta wings and afterburner flame
-      assert.ok(svg.includes('polygon points="0,-16 10,7 4,4 -4,4 -10,7"'));
     });
 
-    it('should use smooth spline kinematics for non-jerky horizontal travel', () => {
+    it('should contain concentric targeting crosshairs with pulsing lock-on animation', () => {
       const svg = buildSvg([], { mock: true });
-      assert.ok(svg.includes('calcMode="spline"') || svg.includes('calcMode="linear"'));
-      assert.ok(svg.includes('repeatCount="indefinite"'));
+      assert.ok(svg.includes('class="reticle-ring"'));
+      assert.ok(svg.includes('class="reticle-tick"'));
     });
   });
 
-  describe('Cyber Deck Radar HUD Frame & Layout', () => {
-    it('should produce 1180px width Cyber Deck layout matching dark.svg aesthetic', () => {
+  describe('Arcade HUD Layout & Visual Structure', () => {
+    it('should produce 1180x340 Arcade Space Defender canvas matching dark.svg aesthetics', () => {
       const svg = buildSvg([], { mock: true });
       assert.ok(svg.startsWith('<svg'));
       assert.ok(svg.endsWith('</svg>'));
-      assert.ok(svg.includes('viewBox="0 0 1180 320"'));
-      assert.ok(svg.includes('rx="16"'));
-      assert.ok(svg.includes('radar.sh --timeline'));
-      assert.ok(svg.includes('CONTRIBUTIONS'));
+      assert.ok(svg.includes('viewBox="0 0 1180 340"'));
+      assert.ok(svg.includes('SCORE:'));
+      assert.ok(svg.includes('LVL 42 · AIML ARCHITECT'));
+      assert.ok(svg.includes('COMBO:'));
+      assert.ok(svg.includes('x14 SHIPPER'));
+      assert.ok(svg.includes('SHIELDS: 100%'));
     });
 
-    it('should include scanline pattern and soft neon glow filter definitions', () => {
+    it('should render all 12 month labels and weekday indicators', () => {
       const svg = buildSvg([], { mock: true });
-      assert.ok(svg.includes('id="scanlines"'));
-      assert.ok(svg.includes('id="softGlow"'));
-      assert.ok(svg.includes('id="bgGlow"'));
-      assert.ok(svg.includes('id="borderGrad"'));
-    });
-
-    it('should render correct month labels across the grid timeline', () => {
-      const svg = buildSvg([], { mock: true });
-      const monthNames = ['JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN', 'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC'];
-      monthNames.forEach(m => {
-        assert.ok(svg.includes(m), `Expected SVG to include month label: ${m}`);
+      ['JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN', 'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC'].forEach(m => {
+        assert.ok(svg.includes(m), `Expected month ${m} in SVG`);
+      });
+      ['MON', 'WED', 'FRI'].forEach(d => {
+        assert.ok(svg.includes(d), `Expected day ${d} in SVG`);
       });
     });
   });

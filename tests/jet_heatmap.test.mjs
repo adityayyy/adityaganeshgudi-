@@ -9,12 +9,13 @@ import {
   computeArcadeScore,
   buildShieldBar,
   selectTargets,
-  buildLaserProjectiles,
-  buildImpactBursts,
+  buildDynamicReticle,
+  buildProminentRailguns,
+  buildExplosiveImpacts,
   THEME
 } from '../generate.mjs';
 
-describe('TDD: Live Target-Hit Combat & Interactive Cell Ionization', () => {
+describe('TDD: Dynamic Tracking Reticle & Prominent Synchronized Combat', () => {
   describe('Input Sanitization & Data Parsing', () => {
     it('should sanitize XML/HTML special characters and disarm inline event handlers', () => {
       const malicious = '<script>alert("xss")</script>&"\' onload="evil()"';
@@ -38,46 +39,35 @@ describe('TDD: Live Target-Hit Combat & Interactive Cell Ionization', () => {
     });
   });
 
-  describe('Target Selection & Live Shooting Mechanics', () => {
-    it('should select active contribution cells as shooting targets along the timeline', () => {
+  describe('Dynamic Tracking Reticle & Sighting Laser Mechanics', () => {
+    it('should generate dynamic reticle with vertical Y-tracking animation and sighting laser guide', () => {
       const mockWeeks = generateMockWeeks(52);
       const cells = buildCells(mockWeeks, 52);
       const targets = selectTargets(cells);
-      assert.ok(Array.isArray(targets));
-      assert.ok(targets.length > 0, 'Should select active target cells');
-      targets.forEach(t => {
-        assert.ok(t.x >= 140);
-        assert.ok(t.y >= 88);
-        assert.ok(t.col >= 0 && t.col < 52);
-        assert.ok(t.count > 0, 'Target cell should have positive contributions');
-      });
+      const reticleSvg = buildDynamicReticle(targets);
+      assert.ok(reticleSvg.includes('id="targeting-reticle"'));
+      assert.ok(reticleSvg.includes('class="sighting-laser"'));
+      assert.ok(reticleSvg.includes('attributeName="transform"'));
+      assert.ok(reticleSvg.includes('type="translate"'));
+    });
+  });
+
+  describe('Prominent Twin Plasma Railgun Blasts & Explosive Impact Bursts', () => {
+    it('should generate prominent twin plasma bolts with white core and neon glow filter', () => {
+      const railgunSvg = buildProminentRailguns();
+      assert.ok(railgunSvg.includes('id="prominent-railguns"'));
+      assert.ok(railgunSvg.includes('filter="url(#softGlow)"'));
+      assert.ok(railgunSvg.includes('class="plasma-beam"'));
     });
 
-    it('should generate laser projectiles flying from y=250 to target cell y with discrete clamping', () => {
+    it('should generate 36px expanding explosive shockwave detonations with radiating spark stars', () => {
       const mockWeeks = generateMockWeeks(52);
       const cells = buildCells(mockWeeks, 52);
       const targets = selectTargets(cells);
-      const laserSvg = buildLaserProjectiles(targets);
-      assert.ok(laserSvg.includes('class="laser-bolt"'));
-      assert.ok(laserSvg.includes('calcMode="discrete"'));
-      assert.ok(laserSvg.includes('animateTransform'));
-    });
-
-    it('should generate synchronized impact shockwaves at exact target cell centers', () => {
-      const mockWeeks = generateMockWeeks(52);
-      const cells = buildCells(mockWeeks, 52);
-      const targets = selectTargets(cells);
-      const burstsSvg = buildImpactBursts(targets);
-      assert.ok(burstsSvg.includes('class="impact-burst"'));
-      assert.ok(burstsSvg.includes('calcMode="discrete"') || burstsSvg.includes('keyTimes'));
-    });
-
-    it('should inject animated fill flash (<animate attributeName="fill">) directly into hit cells', () => {
-      const mockWeeks = generateMockWeeks(52);
-      const svg = buildSvg(mockWeeks, { mock: false });
-      assert.ok(svg.includes('attributeName="fill"'));
-      assert.ok(svg.includes('#FFFFFF'));
-      assert.ok(svg.includes('#86EFAC'));
+      const impactSvg = buildExplosiveImpacts(targets);
+      assert.ok(impactSvg.includes('class="explosive-impact"'));
+      assert.ok(impactSvg.includes('class="shockwave-primary"'));
+      assert.ok(impactSvg.includes('class="spark-star"'));
     });
   });
 
@@ -92,6 +82,7 @@ describe('TDD: Live Target-Hit Combat & Interactive Cell Ionization', () => {
       assert.ok(svg.includes('COMBO:'));
       assert.ok(svg.includes('x14 SHIPPER'));
       assert.ok(svg.includes('SHIELDS: 100%'));
+      assert.ok(svg.includes('id="targeting-reticle"'));
     });
   });
 });

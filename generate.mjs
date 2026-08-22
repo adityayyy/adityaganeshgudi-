@@ -1,12 +1,13 @@
 #!/usr/bin/env node
 /**
- * Cyber-Stealth Interceptor v4: Targeted Pulse Laser Cannon System
+ * Cyber-Stealth Interceptor: Clean Flight Engine
  * 
- * Features:
- * - Lasers are 100% OFF during normal flight.
- * - Lasers ONLY EMIT high-energy burst pulses when passing under target contribution tiles.
- * - Synchronized wingtip muzzle ignition, laser strike, tile flash, and radar shockwave.
- * - Perfectly locked to the jet chassis with 60fps GPU smoothness.
+ * Clean, weapon-free flight:
+ * - Completely removed all laser/bullet mechanisms.
+ * - Smooth aerodynamic banking (+4.5° / -4.5° roll physics).
+ * - Pulsing afterburner flame and particle wake.
+ * - Multi-layered deep space cosmic starfield.
+ * - 100% Real-time GitHub GraphQL contributions.
  */
 
 import fs from "node:fs";
@@ -28,12 +29,7 @@ const COL_CENTER = (col) => GRID_X + col * STEP + CELL / 2;
 const JET_X_START = COL_CENTER(0);        // 25.5
 const JET_X_END   = COL_CENTER(COLS - 1); // 487.5
 const JET_Y = 142;
-const LOOP_DUR = 20; // seconds per full pass
-const MAX_TARGETS = 14;
-
-// Palette
-const FLASH_COLOR = "#22C55E";
-const BLAST_COLOR = "#22C55E";
+const LOOP_DUR = 20; // seconds per full cycle
 
 if (!USERNAME) { console.error("Missing GH_USERNAME"); process.exit(1); }
 if (!TOKEN)    { console.error("Missing GH_TOKEN");    process.exit(1); }
@@ -74,97 +70,12 @@ function buildCells(weeks) {
   return cells;
 }
 
-function pickTargets(cells) {
-  return [...cells].filter(c => c.count > 0)
-    .sort((a, b) => b.count - a.count).slice(0, MAX_TARGETS)
-    .sort((a, b) => a.col - b.col || a.row - b.row);
-}
-
-function jetTimeAtCol(col, dir) {
-  const frac = col / (COLS - 1);
-  return dir === "forward" ? 0.5 * frac : 0.5 + 0.5 * (1 - frac);
-}
-
-const F = n => Number(n.toFixed(5));
-
-// Compute all target firing windows and merge overlapping intervals
-function getFiringWindows(targets) {
-  const halfWindow = 0.007; // ~280ms pulse window per target
-  const rawIntervals = [];
-
-  for (const dir of ["forward", "backward"]) {
-    for (const c of targets) {
-      const centerT = jetTimeAtCol(c.col, dir);
-      const start = Math.max(0, centerT - halfWindow);
-      const end = Math.min(1, centerT + halfWindow);
-      rawIntervals.push([start, end]);
-    }
-  }
-
-  rawIntervals.sort((a, b) => a[0] - b[0]);
-
-  // Merge overlapping intervals
-  const merged = [];
-  for (const [start, end] of rawIntervals) {
-    if (merged.length === 0) {
-      merged.push([start, end]);
-    } else {
-      const last = merged[merged.length - 1];
-      if (start <= last[1] + 0.001) {
-        last[1] = Math.max(last[1], end);
-      } else {
-        merged.push([start, end]);
-      }
-    }
-  }
-  return merged;
-}
-
-function buildGrid(cells, targets) {
-  const tgtSet = new Set(targets.map(t => `${t.col}-${t.row}`));
+function buildGrid(cells) {
   let svg = "";
-  const FLASH_DUR = 0.014;
-
   for (const c of cells) {
-    if (!tgtSet.has(`${c.col}-${c.row}`)) {
-      svg += `<rect x="${c.x}" y="${c.y}" width="${CELL}" height="${CELL}" rx="2" ry="2" fill="${c.color}"/>\n`;
-      continue;
-    }
-    const tFwd  = jetTimeAtCol(c.col, "forward");
-    const tBack = jetTimeAtCol(c.col, "backward");
-    const [t1, t2] = [Math.min(tFwd, tBack), Math.max(tFwd, tBack)];
-    
-    // Grid tile illuminates sharply when struck by the laser burst
-    svg += `<rect x="${c.x}" y="${c.y}" width="${CELL}" height="${CELL}" rx="2" ry="2" fill="${c.color}">` +
-      `<animate attributeName="fill" dur="${LOOP_DUR}s" repeatCount="indefinite" calcMode="discrete" ` +
-      `keyTimes="0;${F(t1)};${F(t1 + FLASH_DUR)};${F(t2)};${F(t2 + FLASH_DUR)};1" ` +
-      `values="${c.color};${FLASH_COLOR};${c.color};${FLASH_COLOR};${c.color};${c.color}"/>` +
-      `</rect>\n`;
+    svg += `<rect x="${c.x}" y="${c.y}" width="${CELL}" height="${CELL}" rx="2" ry="2" fill="${c.color}"/>\n`;
   }
   return svg;
-}
-
-function buildBlasts(targets) {
-  let blasts = "";
-  const BLAST_DUR = 0.012;
-
-  for (const dir of ["forward", "backward"]) {
-    for (const c of targets) {
-      const tHit = jetTimeAtCol(c.col, dir);
-      const centerX = F(c.x + CELL / 2);
-      const targetY = F(c.y + CELL / 2);
-
-      blasts += `<circle cx="${centerX}" cy="${targetY}" r="0" fill="none" stroke="${BLAST_COLOR}" stroke-width="1.4" opacity="0">` +
-        `<animate attributeName="r" dur="${LOOP_DUR}s" repeatCount="indefinite" ` +
-        `keyTimes="0;${F(tHit)};${F(tHit + BLAST_DUR)};1" values="0;2;11;11"/>` +
-        `<animate attributeName="stroke-width" dur="${LOOP_DUR}s" repeatCount="indefinite" ` +
-        `keyTimes="0;${F(tHit)};${F(tHit + BLAST_DUR)};1" values="1.6;1.2;0.2;0.2"/>` +
-        `<animate attributeName="opacity" dur="${LOOP_DUR}s" repeatCount="indefinite" calcMode="discrete" ` +
-        `keyTimes="0;${F(tHit)};${F(tHit + BLAST_DUR)};1" values="0;1;0;0"/>` +
-        `</circle>\n`;
-    }
-  }
-  return blasts;
 }
 
 function buildStars() {
@@ -179,30 +90,7 @@ function buildStars() {
   ).join("\n");
 }
 
-function buildJet(firingWindows) {
-  // Build discrete opacity keyTimes and values for the lasers and muzzle flares
-  const keyTimes = [0];
-  const opacities = [0];
-
-  for (const [start, end] of firingWindows) {
-    if (start > keyTimes[keyTimes.length - 1]) {
-      keyTimes.push(F(start));
-      opacities.push(1);
-    }
-    if (end > keyTimes[keyTimes.length - 1]) {
-      keyTimes.push(F(end));
-      opacities.push(0);
-    }
-  }
-
-  if (keyTimes[keyTimes.length - 1] < 1.0) {
-    keyTimes.push(1);
-    opacities.push(0);
-  }
-
-  const laserKeyTimes = keyTimes.join(";");
-  const laserValues   = opacities.join(";");
-
+function buildJet() {
   return `<g id="jet-interceptor">
   <!-- Smooth Linear Flight Translation -->
   <animateTransform attributeName="transform" attributeType="XML" type="translate"
@@ -216,40 +104,6 @@ function buildJet(firingWindows) {
       dur="${LOOP_DUR}s" repeatCount="indefinite"
       keyTimes="0; 0.03; 0.47; 0.50; 0.53; 0.97; 1.0"
       values="0; 4.5; 4.5; 0; -4.5; -4.5; 0"/>
-
-    <!-- ==================== TARGETED PULSE LASER CANNONS ==================== -->
-    <!-- Lasers are 100% OFF during flight and ONLY pulse ON when hitting targets -->
-    
-    <g id="pulse-lasers" opacity="0">
-      <animate attributeName="opacity" dur="${LOOP_DUR}s" repeatCount="indefinite" calcMode="discrete"
-        keyTimes="${laserKeyTimes}"
-        values="${laserValues}"/>
-
-      <!-- Port & Starboard Ion Glow Aura -->
-      <line x1="-5" y1="-2" x2="-5" y2="-125" stroke="#22C55E" stroke-width="3.5" stroke-linecap="round" opacity="0.45"/>
-      <line x1="5" y1="-2" x2="5" y2="-125" stroke="#22C55E" stroke-width="3.5" stroke-linecap="round" opacity="0.45"/>
-
-      <!-- Port & Starboard Laser Core -->
-      <line x1="-5" y1="-2" x2="-5" y2="-125" stroke="#FFFFFF" stroke-width="1.4" stroke-linecap="round"/>
-      <line x1="5" y1="-2" x2="5" y2="-125" stroke="#FFFFFF" stroke-width="1.4" stroke-linecap="round"/>
-
-      <!-- Rapid Energy Surges up the beam -->
-      <line x1="-5" y1="-2" x2="-5" y2="-125" stroke="#4ADE80" stroke-width="2.2" stroke-dasharray="8 16">
-        <animate attributeName="stroke-dashoffset" values="0;-48" dur="0.15s" repeatCount="indefinite"/>
-      </line>
-      <line x1="5" y1="-2" x2="5" y2="-125" stroke="#4ADE80" stroke-width="2.2" stroke-dasharray="8 16">
-        <animate attributeName="stroke-dashoffset" values="-12;-60" dur="0.15s" repeatCount="indefinite"/>
-      </line>
-
-      <!-- Wingtip Muzzle Flares (ignite on fire) -->
-      <circle cx="-5" cy="-2" r="3.2" fill="#4ADE80">
-        <animate attributeName="r" values="2.5;4;2.5" dur="0.12s" repeatCount="indefinite"/>
-      </circle>
-      <circle cx="5" cy="-2" r="3.2" fill="#4ADE80">
-        <animate attributeName="r" values="4;2.5;4" dur="0.12s" repeatCount="indefinite"/>
-      </circle>
-    </g>
-    <!-- ===================================================================== -->
 
     <!-- Plasma Exhaust Wake -->
     <circle cx="0" cy="14" r="3" fill="#38BDF8" opacity="0.35">
@@ -275,19 +129,14 @@ function buildJet(firingWindows) {
 
 function buildSvg(weeks) {
   const cells = buildCells(weeks);
-  const targets = pickTargets(cells);
-  const firingWindows = getFiringWindows(targets);
-  const blasts = buildBlasts(targets);
 
   return `<svg viewBox="0 0 ${WIDTH} ${HEIGHT}" xmlns="http://www.w3.org/2000/svg">
 <rect x="0" y="0" width="${WIDTH}" height="${HEIGHT}" fill="#0B1120"/>
 <g id="stars">
 ${buildStars()}</g>
 <g id="grid">
-${buildGrid(cells, targets)}</g>
-<g id="blasts">
-${blasts}</g>
-${buildJet(firingWindows)}
+${buildGrid(cells)}</g>
+${buildJet()}
 </svg>`;
 }
 

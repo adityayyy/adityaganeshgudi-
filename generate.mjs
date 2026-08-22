@@ -202,13 +202,133 @@ export function buildCells(weeks, colCount = COLS) {
   return cells;
 }
 
-export function buildGrid(cells) {
+export function selectTargets(cells) {
+  const activeCells = cells.filter(c => c.count > 0);
+  const byCol = new Map();
+  for (const c of activeCells) {
+    if (!byCol.has(c.col) || byCol.get(c.col).count < c.count) {
+      byCol.set(c.col, c);
+    }
+  }
+
+  let selectedCols = Array.from(byCol.keys()).sort((a, b) => a - b);
+  // If fewer than 8 active columns, pick prominent columns evenly across the 52 weeks
+  if (selectedCols.length < 8) {
+    const fallbackCols = [3, 8, 14, 20, 26, 32, 38, 44, 49];
+    for (const fCol of fallbackCols) {
+      if (!byCol.has(fCol)) {
+        const colCells = cells.filter(c => c.col === fCol);
+        const repCell = colCells[Math.floor(colCells.length / 2)] || colCells[0];
+        if (repCell) byCol.set(fCol, repCell);
+      }
+    }
+    selectedCols = Array.from(byCol.keys()).sort((a, b) => a - b);
+  }
+
+  // Cap at 16 targets maximum to keep SVG lightweight and crisp
+  if (selectedCols.length > 16) {
+    const step = Math.ceil(selectedCols.length / 16);
+    selectedCols = selectedCols.filter((_, idx) => idx % step === 0);
+  }
+
+  return selectedCols.map(col => {
+    const cell = byCol.get(col);
+    const cx = cell.x + CELL / 2;
+    const cy = cell.y + CELL / 2;
+
+    // Timing math for 18.0s loop (Forward: 0..9s, Return: 9..18s)
+    const k_launch_fwd = Math.max(0.001, (col / 51) * 0.5);
+    const k_hit_fwd = Math.min(0.490, k_launch_fwd + 0.010);
+    const k_mid_fwd = Math.min(0.495, k_hit_fwd + 0.008);
+    const k_settle_fwd = Math.min(0.499, k_hit_fwd + 0.020);
+
+    const k_launch_ret = Math.max(0.501, 0.5 + ((51 - col) / 51) * 0.5);
+    const k_hit_ret = Math.min(0.985, k_launch_ret + 0.010);
+    const k_mid_ret = Math.min(0.990, k_hit_ret + 0.008);
+    const k_settle_ret = Math.min(0.999, k_hit_ret + 0.020);
+
+    return {
+      col,
+      x: cell.x,
+      y: cell.y,
+      cx,
+      cy,
+      count: cell.count || 1,
+      color: cell.color,
+      k_launch_fwd,
+      k_hit_fwd,
+      k_mid_fwd,
+      k_settle_fwd,
+      k_launch_ret,
+      k_hit_ret,
+      k_mid_ret,
+      k_settle_ret
+    };
+  });
+}
+
+export function buildGrid(cells, targets = []) {
+  const targetMap = new Map();
+  targets.forEach(t => targetMap.set(`${t.x},${t.y}`, t));
+
   let svg = "";
   for (const c of cells) {
+    const key = `${c.x},${c.y}`;
+    const isTarget = targetMap.has(key);
     const isLevel0 = c.color === THEME.palette[0];
     const strokeAttr = isLevel0 ? ` stroke="${THEME.cellEmptyBorder}" stroke-width="0.75"` : ' stroke="#34D399" stroke-width="0.35"';
-    svg += `  <rect x="${c.x}" y="${c.y}" width="${CELL}" height="${CELL}" rx="2.5" fill="${c.color}"${strokeAttr}><title>${c.count} power units on ${c.date || "untracked"}</title></rect>\n`;
+
+    if (isTarget) {
+      const t = targetMap.get(key);
+      svg += `  <rect x="${c.x}" y="${c.y}" width="${CELL}" height="${CELL}" rx="2.5" fill="${c.color}"${strokeAttr}>\n`;
+      svg += `    <animate attributeName="fill" dur="18s" repeatCount="indefinite" values="${c.color}; ${c.color}; #FFFFFF; #86EFAC; ${c.color}; ${c.color}; #FFFFFF; #86EFAC; ${c.color}" keyTimes="0; ${t.k_launch_fwd.toFixed(4)}; ${t.k_hit_fwd.toFixed(4)}; ${t.k_mid_fwd.toFixed(4)}; ${t.k_settle_fwd.toFixed(4)}; ${t.k_launch_ret.toFixed(4)}; ${t.k_hit_ret.toFixed(4)}; ${t.k_mid_ret.toFixed(4)}; 1"/>\n`;
+      svg += `    <animate attributeName="stroke" dur="18s" repeatCount="indefinite" values="#34D399; #34D399; #FFFFFF; #38BDF8; #34D399; #34D399; #FFFFFF; #38BDF8; #34D399" keyTimes="0; ${t.k_launch_fwd.toFixed(4)}; ${t.k_hit_fwd.toFixed(4)}; ${t.k_mid_fwd.toFixed(4)}; ${t.k_settle_fwd.toFixed(4)}; ${t.k_launch_ret.toFixed(4)}; ${t.k_hit_ret.toFixed(4)}; ${t.k_mid_ret.toFixed(4)}; 1"/>\n`;
+      svg += `    <animate attributeName="stroke-width" dur="18s" repeatCount="indefinite" values="0.35; 0.35; 1.5; 0.8; 0.35; 0.35; 1.5; 0.8; 0.35" keyTimes="0; ${t.k_launch_fwd.toFixed(4)}; ${t.k_hit_fwd.toFixed(4)}; ${t.k_mid_fwd.toFixed(4)}; ${t.k_settle_fwd.toFixed(4)}; ${t.k_launch_ret.toFixed(4)}; ${t.k_hit_ret.toFixed(4)}; ${t.k_mid_ret.toFixed(4)}; 1"/>\n`;
+      svg += `    <title>${c.count} power units on ${c.date || "untracked"}</title>\n`;
+      svg += `  </rect>\n`;
+    } else {
+      svg += `  <rect x="${c.x}" y="${c.y}" width="${CELL}" height="${CELL}" rx="2.5" fill="${c.color}"${strokeAttr}><title>${c.count} power units on ${c.date || "untracked"}</title></rect>\n`;
+    }
   }
+  return svg;
+}
+
+export function buildLaserProjectiles(targets) {
+  let svg = '<g id="laser-projectiles">\n';
+  for (const t of targets) {
+    // Forward Laser Bolt
+    svg += `  <g class="laser-bolt" opacity="0">\n`;
+    svg += `    <rect x="${t.cx - 1.5}" y="0" width="3" height="18" rx="1.5" fill="#FFFFFF" stroke="#38BDF8" stroke-width="1"/>\n`;
+    svg += `    <animateTransform attributeName="transform" type="translate" dur="18s" repeatCount="indefinite" values="0,250; 0,${t.cy}" keyTimes="${t.k_launch_fwd.toFixed(4)}; ${t.k_hit_fwd.toFixed(4)}" fill="remove"/>\n`;
+    svg += `    <animate attributeName="opacity" dur="18s" repeatCount="indefinite" calcMode="discrete" values="0; 1; 0; 0" keyTimes="0; ${t.k_launch_fwd.toFixed(4)}; ${t.k_hit_fwd.toFixed(4)}; 1"/>\n`;
+    svg += `  </g>\n`;
+
+    // Return Laser Bolt
+    svg += `  <g class="laser-bolt" opacity="0">\n`;
+    svg += `    <rect x="${t.cx - 1.5}" y="0" width="3" height="18" rx="1.5" fill="#FFFFFF" stroke="#38BDF8" stroke-width="1"/>\n`;
+    svg += `    <animateTransform attributeName="transform" type="translate" dur="18s" repeatCount="indefinite" values="0,250; 0,${t.cy}" keyTimes="${t.k_launch_ret.toFixed(4)}; ${t.k_hit_ret.toFixed(4)}" fill="remove"/>\n`;
+    svg += `    <animate attributeName="opacity" dur="18s" repeatCount="indefinite" calcMode="discrete" values="0; 1; 0; 0" keyTimes="0; ${t.k_launch_ret.toFixed(4)}; ${t.k_hit_ret.toFixed(4)}; 1"/>\n`;
+    svg += `  </g>\n`;
+  }
+  svg += '</g>\n';
+  return svg;
+}
+
+export function buildImpactBursts(targets) {
+  let svg = '<g id="impact-bursts">\n';
+  for (const t of targets) {
+    svg += `  <g class="impact-burst">\n`;
+    svg += `    <circle cx="${t.cx}" cy="${t.cy}" r="0" fill="none" stroke="#FACC15" stroke-width="1.6" opacity="0">\n`;
+    svg += `      <animate attributeName="r" dur="18s" repeatCount="indefinite" values="0; 0; 2; 14; 0; 0; 2; 14; 0" keyTimes="0; ${t.k_launch_fwd.toFixed(4)}; ${t.k_hit_fwd.toFixed(4)}; ${t.k_settle_fwd.toFixed(4)}; ${(t.k_settle_fwd + 0.001).toFixed(4)}; ${t.k_launch_ret.toFixed(4)}; ${t.k_hit_ret.toFixed(4)}; ${t.k_settle_ret.toFixed(4)}; 1"/>\n`;
+    svg += `      <animate attributeName="opacity" dur="18s" repeatCount="indefinite" values="0; 0; 1; 0; 0; 0; 1; 0; 0" keyTimes="0; ${t.k_launch_fwd.toFixed(4)}; ${t.k_hit_fwd.toFixed(4)}; ${t.k_settle_fwd.toFixed(4)}; ${(t.k_settle_fwd + 0.001).toFixed(4)}; ${t.k_launch_ret.toFixed(4)}; ${t.k_hit_ret.toFixed(4)}; ${t.k_settle_ret.toFixed(4)}; 1"/>\n`;
+    svg += `    </circle>\n`;
+    svg += `    <circle cx="${t.cx}" cy="${t.cy}" r="0" fill="none" stroke="#38BDF8" stroke-width="1.2" opacity="0">\n`;
+    svg += `      <animate attributeName="r" dur="18s" repeatCount="indefinite" values="0; 0; 4; 22; 0; 0; 4; 22; 0" keyTimes="0; ${t.k_launch_fwd.toFixed(4)}; ${t.k_hit_fwd.toFixed(4)}; ${t.k_settle_fwd.toFixed(4)}; ${(t.k_settle_fwd + 0.001).toFixed(4)}; ${t.k_launch_ret.toFixed(4)}; ${t.k_hit_ret.toFixed(4)}; ${t.k_settle_ret.toFixed(4)}; 1"/>\n`;
+    svg += `      <animate attributeName="opacity" dur="18s" repeatCount="indefinite" values="0; 0; 0.8; 0; 0; 0; 0.8; 0; 0" keyTimes="0; ${t.k_launch_fwd.toFixed(4)}; ${t.k_hit_fwd.toFixed(4)}; ${t.k_settle_fwd.toFixed(4)}; ${(t.k_settle_fwd + 0.001).toFixed(4)}; ${t.k_launch_ret.toFixed(4)}; ${t.k_hit_ret.toFixed(4)}; ${t.k_settle_ret.toFixed(4)}; 1"/>\n`;
+    svg += `    </circle>\n`;
+    svg += `  </g>\n`;
+  }
+  svg += '</g>\n';
   return svg;
 }
 
@@ -268,108 +388,8 @@ export function buildLegend() {
   return svg;
 }
 
-export function buildPhotonTorpedoes() {
-  return `<g id="photon-torpedoes">
-  <!-- Left Homing Photon Torpedo Payload -->
-  <g class="torpedo-payload" transform="translate(-10, 0)" opacity="0">
-    <ellipse cx="0" cy="0" rx="3.5" ry="7" fill="#FFFFFF" filter="url(#softGlow)"/>
-    <ellipse cx="0" cy="0" rx="2" ry="4.5" fill="#FFFFFF"/>
-    <!-- Glowing Plasma Energy Trail -->
-    <polygon points="-3,5 3,5 0,18" fill="url(#plasmaFlame)">
-      <animate attributeName="opacity" values="0.8;1;0.7;1" dur="0.1s" repeatCount="indefinite"/>
-    </polygon>
-    <circle cx="0" cy="8" r="4" fill="#38BDF8" opacity="0.6"/>
-    <!-- Curved Left Arc Motion (Launches from Pod -> Curves Outward -> Homes into Matrix Node) -->
-    <animateTransform attributeName="transform" type="translate" dur="2.2s" repeatCount="indefinite" calcMode="spline"
-      keyTimes="0; 0.05; 0.40; 0.41; 1"
-      keySplines="0.2 0 0.4 1; 0.2 0 0.4 1; 0 0 1 1; 0 0 1 1"
-      values="-10,0; -32,-65; -16,-125; -10,0; -10,0"/>
-    <animate attributeName="opacity" dur="2.2s" repeatCount="indefinite" calcMode="discrete"
-      keyTimes="0; 0.05; 0.40; 1" values="0; 1; 0; 0"/>
-  </g>
-
-  <!-- Right Homing Photon Torpedo Payload -->
-  <g class="torpedo-payload" transform="translate(10, 0)" opacity="0">
-    <ellipse cx="0" cy="0" rx="3.5" ry="7" fill="#FFFFFF" filter="url(#softGlow)"/>
-    <ellipse cx="0" cy="0" rx="2" ry="4.5" fill="#FFFFFF"/>
-    <!-- Glowing Plasma Energy Trail -->
-    <polygon points="-3,5 3,5 0,18" fill="url(#plasmaFlame)">
-      <animate attributeName="opacity" values="0.8;1;0.7;1" dur="0.1s" repeatCount="indefinite"/>
-    </polygon>
-    <circle cx="0" cy="8" r="4" fill="#38BDF8" opacity="0.6"/>
-    <!-- Curved Right Arc Motion (Launches from Pod -> Curves Outward -> Homes into Matrix Node) -->
-    <animateTransform attributeName="transform" type="translate" dur="2.2s" repeatCount="indefinite" calcMode="spline"
-      keyTimes="0; 0.05; 0.40; 0.41; 1"
-      keySplines="0.2 0 0.4 1; 0.2 0 0.4 1; 0 0 1 1; 0 0 1 1"
-      values="10,0; 32,-65; 16,-125; 10,0; 10,0"/>
-    <animate attributeName="opacity" dur="2.2s" repeatCount="indefinite" calcMode="discrete"
-      keyTimes="0; 0.05; 0.40; 1" values="0; 1; 0; 0"/>
-  </g>
-
-  <!-- Impact Shockwave Burst Over Matrix Nodes -->
-  <g class="impact-shockwave">
-    <!-- Left Impact Expanding Rings & Spark Stars -->
-    <circle cx="-16" cy="-125" r="0" fill="#38BDF8" opacity="0">
-      <animate attributeName="r" dur="2.2s" repeatCount="indefinite" keyTimes="0; 0.40; 0.55; 1" values="0; 14; 22; 0"/>
-      <animate attributeName="opacity" dur="2.2s" repeatCount="indefinite" keyTimes="0; 0.40; 0.55; 1" values="0; 0.5; 0; 0"/>
-    </circle>
-    <circle cx="-16" cy="-125" r="0" fill="none" stroke="#FACC15" stroke-width="2" class="shockwave-ring" opacity="0">
-      <animate attributeName="r" dur="2.2s" repeatCount="indefinite" keyTimes="0; 0.40; 0.60; 1" values="0; 4; 26; 0"/>
-      <animate attributeName="opacity" dur="2.2s" repeatCount="indefinite" keyTimes="0; 0.40; 0.60; 1" values="0; 1; 0; 0"/>
-    </circle>
-    <circle cx="-16" cy="-125" r="0" fill="none" stroke="#38BDF8" stroke-width="1.5" class="shockwave-ring" opacity="0">
-      <animate attributeName="r" dur="2.2s" repeatCount="indefinite" keyTimes="0; 0.40; 0.68; 1" values="0; 6; 34; 0"/>
-      <animate attributeName="opacity" dur="2.2s" repeatCount="indefinite" keyTimes="0; 0.40; 0.68; 1" values="0; 0.9; 0; 0"/>
-    </circle>
-    <!-- Left 8-Point Spark Lines -->
-    <line x1="-26" y1="-125" x2="-6" y2="-125" stroke="#FFFFFF" stroke-width="1.5" opacity="0">
-      <animate attributeName="opacity" dur="2.2s" repeatCount="indefinite" keyTimes="0; 0.40; 0.56; 1" values="0; 1; 0; 0"/>
-    </line>
-    <line x1="-16" y1="-135" x2="-16" y2="-115" stroke="#FFFFFF" stroke-width="1.5" opacity="0">
-      <animate attributeName="opacity" dur="2.2s" repeatCount="indefinite" keyTimes="0; 0.40; 0.56; 1" values="0; 1; 0; 0"/>
-    </line>
-    <line x1="-23" y1="-132" x2="-9" y2="-118" stroke="#FACC15" stroke-width="1.2" opacity="0">
-      <animate attributeName="opacity" dur="2.2s" repeatCount="indefinite" keyTimes="0; 0.40; 0.56; 1" values="0; 1; 0; 0"/>
-    </line>
-    <line x1="-23" y1="-118" x2="-9" y2="-132" stroke="#FACC15" stroke-width="1.2" opacity="0">
-      <animate attributeName="opacity" dur="2.2s" repeatCount="indefinite" keyTimes="0; 0.40; 0.56; 1" values="0; 1; 0; 0"/>
-    </line>
-
-    <!-- Right Impact Expanding Rings & Spark Stars -->
-    <circle cx="16" cy="-125" r="0" fill="#38BDF8" opacity="0">
-      <animate attributeName="r" dur="2.2s" repeatCount="indefinite" keyTimes="0; 0.40; 0.55; 1" values="0; 14; 22; 0"/>
-      <animate attributeName="opacity" dur="2.2s" repeatCount="indefinite" keyTimes="0; 0.40; 0.55; 1" values="0; 0.5; 0; 0"/>
-    </circle>
-    <circle cx="16" cy="-125" r="0" fill="none" stroke="#FACC15" stroke-width="2" class="shockwave-ring" opacity="0">
-      <animate attributeName="r" dur="2.2s" repeatCount="indefinite" keyTimes="0; 0.40; 0.60; 1" values="0; 4; 26; 0"/>
-      <animate attributeName="opacity" dur="2.2s" repeatCount="indefinite" keyTimes="0; 0.40; 0.60; 1" values="0; 1; 0; 0"/>
-    </circle>
-    <circle cx="16" cy="-125" r="0" fill="none" stroke="#38BDF8" stroke-width="1.5" class="shockwave-ring" opacity="0">
-      <animate attributeName="r" dur="2.2s" repeatCount="indefinite" keyTimes="0; 0.40; 0.68; 1" values="0; 6; 34; 0"/>
-      <animate attributeName="opacity" dur="2.2s" repeatCount="indefinite" keyTimes="0; 0.40; 0.68; 1" values="0; 0.9; 0; 0"/>
-    </circle>
-    <!-- Right 8-Point Spark Lines -->
-    <line x1="6" y1="-125" x2="26" y2="-125" stroke="#FFFFFF" stroke-width="1.5" opacity="0">
-      <animate attributeName="opacity" dur="2.2s" repeatCount="indefinite" keyTimes="0; 0.40; 0.56; 1" values="0; 1; 0; 0"/>
-    </line>
-    <line x1="16" y1="-135" x2="16" y2="-115" stroke="#FFFFFF" stroke-width="1.5" opacity="0">
-      <animate attributeName="opacity" dur="2.2s" repeatCount="indefinite" keyTimes="0; 0.40; 0.56; 1" values="0; 1; 0; 0"/>
-    </line>
-    <line x1="9" y1="-132" x2="23" y2="-118" stroke="#FACC15" stroke-width="1.2" opacity="0">
-      <animate attributeName="opacity" dur="2.2s" repeatCount="indefinite" keyTimes="0; 0.40; 0.56; 1" values="0; 1; 0; 0"/>
-    </line>
-    <line x1="9" y1="-118" x2="23" y2="-132" stroke="#FACC15" stroke-width="1.2" opacity="0">
-      <animate attributeName="opacity" dur="2.2s" repeatCount="indefinite" keyTimes="0; 0.40; 0.56; 1" values="0; 1; 0; 0"/>
-    </line>
-  </g>
-</g>`;
-}
-
 export function buildArcadeStarfighter() {
   return `<g id="starfighter">
-  <!-- Option 3: Lock-On Homing Photon Torpedoes Weapon System -->
-  ${buildPhotonTorpedoes()}
-
   <!-- Holographic Target Locking Reticle Locked over Matrix Grid -->
   <g id="targeting-reticle">
     <circle cx="0" cy="-120" r="18" fill="none" stroke="#4ADE80" stroke-width="1.2" stroke-dasharray="4 2" class="reticle-ring">
@@ -450,12 +470,15 @@ export function buildArcadeStarfighter() {
 }
 
 export function buildSvg(weeks, options = {}) {
-  const isMock = Boolean(options.mock || !weeks || weeks.length === 0);
-  const dataWeeks = isMock ? generateMockWeeks(COLS) : weeks;
-  const cells = buildCells(dataWeeks, COLS);
-  const stats = computeStats(dataWeeks);
+  const { mock = false, username = USERNAME, cols = 52 } = options;
+  if (mock || !weeks || weeks.length === 0) {
+    weeks = generateMockWeeks(cols);
+  }
 
-  const scoreText = sanitizeText(computeArcadeScore(stats.total || (isMock ? 766 : 0)));
+  const cells = buildCells(weeks, cols);
+  const targets = selectTargets(cells);
+  const stats = computeStats(cells);
+  const scoreText = computeArcadeScore(stats.total);
 
   return `<svg xmlns="http://www.w3.org/2000/svg" width="${WIDTH}" height="${HEIGHT}" viewBox="0 0 ${WIDTH} ${HEIGHT}">
 <defs>
@@ -549,7 +572,11 @@ ${buildDayLabels()}
 
 <!-- Heatmap Contribution Power-Core Grid -->
 <g id="grid">
-${buildGrid(cells)}</g>
+${buildGrid(cells, targets)}</g>
+
+<!-- Combat Layer: Live Laser Projectiles & Impact Shockwaves -->
+${buildLaserProjectiles(targets)}
+${buildImpactBursts(targets)}
 
 <!-- Bottom HUD Legend & Defense Grid Metadata -->
 ${buildLegend()}

@@ -1,5 +1,9 @@
 <a href="https://github.com/pratikforge/pratikforge">
-  <img alt="GitHub Profile README" src="https://raw.githubusercontent.com/pratikforge/pratikforge/main/light.svg?v=4" width="100%">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/pratikforge/pratikforge/main/dark.svg?v=5">
+    <source media="(prefers-color-scheme: light)" srcset="https://raw.githubusercontent.com/pratikforge/pratikforge/main/light.svg?v=5">
+    <img alt="GitHub Profile README" src="https://raw.githubusercontent.com/pratikforge/pratikforge/main/dark.svg?v=5" width="100%">
+  </picture>
 </a>
 <br>
 <p align="center">

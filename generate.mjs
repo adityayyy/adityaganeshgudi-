@@ -1,11 +1,12 @@
 #!/usr/bin/env node
 /**
- * Aerospace Cyberpunk Radar HUD & Jet Heatmap Generator
+ * Concept 1: Retro Arcade Space Defender Jet & Heatmap Generator
  * 
- * - 1180px Cyber Deck frame mathematically harmonized with dark.svg
- * - 100% Symmetrical upright stealth jet with multi-stage plasma thruster
- * - Live GitHub GraphQL sync with resilient deterministic mock fallback
- * - Strict input sanitization & STRIDE / OWASP Top 10 defenses
+ * - 1180px x 340px Retro Arcade Canvas with CRT scanlines and neon borders
+ * - Dual-hull interceptor starfighter with twin plasma thrusters and railguns
+ * - Holographic target-locking reticle sweeping over contribution power-nodes
+ * - Retro Arcade HUD: Score (PTS), Level (Rank), Combo multiplier, Shield health bar
+ * - Strict TDD & STRIDE / OWASP Top 10 security defenses
  */
 
 import fs from "node:fs";
@@ -22,23 +23,25 @@ export const GAP = 4;
 export const STEP = CELL + GAP; // 18px
 
 export const WIDTH = 1180;
-export const HEIGHT = 320;
+export const HEIGHT = 340;
 
 export const GRID_X = 140;
-export const GRID_Y = 86;
+export const GRID_Y = 88;
 
 export const JET_X_START = GRID_X + CELL / 2; // 147
 export const JET_X_END = GRID_X + (COLS - 1) * STEP + CELL / 2; // 1065
-export const JET_Y = 250;
+export const JET_Y = 270;
 export const LOOP_DUR = 18; // seconds
 
 export const THEME = {
-  bgStart: "#0B1120",
-  bgEnd: "#050816",
+  bgStart: "#080C16",
+  bgEnd: "#03060F",
   border1: "#22C55E",
   border2: "#10B981",
   border3: "#38BDF8",
+  gold: "#FACC15",
   cyan: "#38BDF8",
+  rose: "#FB7185",
   emerald: "#22C55E",
   mint: "#86EFAC",
   slate: "#94A3B8",
@@ -79,6 +82,31 @@ export function validateApiEndpoint(urlStr) {
   } catch {
     return false;
   }
+}
+
+export function computeArcadeScore(count) {
+  const safeCount = Number(count);
+  if (count === null || count === undefined || isNaN(safeCount)) {
+    return "766,000 PTS";
+  }
+  if (safeCount === 0) return "0 PTS";
+  const pts = safeCount * 1000;
+  return pts.toLocaleString("en-US") + " PTS";
+}
+
+export function buildShieldBar(pct = 100) {
+  const totalBlocks = 10;
+  const activeBlocks = Math.max(0, Math.min(totalBlocks, Math.round((pct / 100) * totalBlocks)));
+  let svg = '<g id="shield-segments">\n';
+  for (let i = 0; i < totalBlocks; i++) {
+    const x = i * 10;
+    const isFilled = i < activeBlocks;
+    const fill = isFilled ? "#22D3EE" : "#0F172A";
+    const opacity = isFilled ? "0.95" : "0.3";
+    svg += `  <rect x="${x}" y="0" width="7.5" height="12" rx="1.5" fill="${fill}" opacity="${opacity}" stroke="#0284C7" stroke-width="0.5"/>\n`;
+  }
+  svg += "</g>";
+  return svg;
 }
 
 export function generateMockWeeks(colCount = COLS) {
@@ -159,7 +187,6 @@ export function buildCells(weeks, colCount = COLS) {
     for (let row = 0; row < ROWS; row++) {
       const day = days[row] || { contributionCount: 0, color: THEME.palette[0], date: null };
       const rawColor = day.color || THEME.palette[0];
-      // Map GitHub default gray to cyber dark slate
       const color = (rawColor === "#161b22" || rawColor === "#ebedf0") ? THEME.palette[0] : rawColor;
       cells.push({
         col,
@@ -179,10 +206,8 @@ export function buildGrid(cells) {
   let svg = "";
   for (const c of cells) {
     const isLevel0 = c.color === THEME.palette[0];
-    const strokeAttr = isLevel0 ? ` stroke="${THEME.cellEmptyBorder}" stroke-width="0.75"` : "";
-    svg += `  <rect x="${c.x}" y="${c.y}" width="${CELL}" height="${CELL}" rx="2.5" fill="${c.color}"${strokeAttr}>\n`;
-    svg += `    <title>${c.count} contributions on ${c.date || "untracked day"}</title>\n`;
-    svg += `  </rect>\n`;
+    const strokeAttr = isLevel0 ? ` stroke="${THEME.cellEmptyBorder}" stroke-width="0.75"` : ' stroke="#34D399" stroke-width="0.35"';
+    svg += `  <rect x="${c.x}" y="${c.y}" width="${CELL}" height="${CELL}" rx="2.5" fill="${c.color}"${strokeAttr}><title>${c.count} power units on ${c.date || "untracked"}</title></rect>\n`;
   }
   return svg;
 }
@@ -193,7 +218,7 @@ export function buildMonthLabels() {
   monthCols.forEach((col, idx) => {
     const x = GRID_X + col * STEP;
     const label = MONTH_NAMES[idx % MONTH_NAMES.length];
-    svg += `  <text x="${x}" y="73" class="axis-label">${label}</text>\n`;
+    svg += `  <text x="${x}" y="74" class="axis-label">${label}</text>\n`;
   });
   return svg;
 }
@@ -209,11 +234,11 @@ export function buildDayLabels() {
 
 export function buildCrosshairs() {
   const points = [
-    [24, 60], [WIDTH - 24, 60],
-    [24, HEIGHT - 24], [WIDTH - 24, HEIGHT - 24]
+    [22, 60], [WIDTH - 22, 60],
+    [22, HEIGHT - 22], [WIDTH - 22, HEIGHT - 22]
   ];
   return points.map(([x, y]) =>
-    `  <path d="M${x - 4} ${y} H${x + 4} M${x} ${y - 4} V${y + 4}" stroke="#38BDF8" stroke-width="1" opacity="0.3"/>`
+    `  <path d="M${x - 4} ${y} H${x + 4} M${x} ${y - 4} V${y + 4}" stroke="#22D3EE" stroke-width="1" opacity="0.4"/>`
   ).join("\n");
 }
 
@@ -221,7 +246,7 @@ export function buildStars() {
   const stars = [
     [35, 110, 2.2], [45, 190, 3.1], [75, 140, 1.8], [95, 230, 2.7],
     [1090, 110, 2.5], [1120, 180, 1.9], [1145, 130, 3.4], [1105, 220, 2.1],
-    [320, 275, 2.0], [580, 275, 3.0], [840, 275, 1.7]
+    [320, 290, 2.0], [580, 290, 3.0], [840, 290, 1.7]
   ];
   return stars.map(([x, y, dur]) =>
     `  <circle cx="${x}" cy="${y}" r="1.1" fill="#7DD3FC">` +
@@ -231,59 +256,91 @@ export function buildStars() {
 }
 
 export function buildLegend() {
-  let svg = `<g transform="translate(${GRID_X}, ${HEIGHT - 22})">\n`;
-  svg += `  <text x="0" y="8" class="legend-text">LESS</text>\n`;
+  let svg = `<g transform="translate(${GRID_X}, ${HEIGHT - 20})">\n`;
+  svg += `  <text x="0" y="8" class="legend-text">POWER NODES: LOW</text>\n`;
   THEME.palette.forEach((color, i) => {
-    const x = 38 + i * 14;
+    const x = 115 + i * 14;
     const stroke = color === THEME.palette[0] ? ` stroke="${THEME.cellEmptyBorder}" stroke-width="0.75"` : "";
     svg += `  <rect x="${x}" y="0" width="10" height="10" rx="2" fill="${color}"${stroke}/>\n`;
   });
-  svg += `  <text x="${38 + 5 * 14 + 4}" y="8" class="legend-text">MORE</text>\n`;
+  svg += `  <text x="${115 + 5 * 14 + 4}" y="8" class="legend-text">OVERDRIVE</text>\n`;
   svg += `</g>\n`;
   return svg;
 }
 
-export function buildJet() {
-  return `<g id="jet">
+export function buildArcadeStarfighter() {
+  return `<g id="starfighter">
+  <!-- Holographic Target Locking Reticle Locked over Matrix Grid -->
+  <g id="targeting-reticle">
+    <circle cx="0" cy="-120" r="18" fill="none" stroke="#4ADE80" stroke-width="1.2" stroke-dasharray="4 2" class="reticle-ring">
+      <animate attributeName="r" values="16;22;16" dur="1.8s" repeatCount="indefinite"/>
+      <animate attributeName="opacity" values="0.45;0.95;0.45" dur="1.8s" repeatCount="indefinite"/>
+    </circle>
+    <circle cx="0" cy="-120" r="28" fill="none" stroke="#22D3EE" stroke-width="1" opacity="0.65" stroke-dasharray="8 4">
+      <animateTransform attributeName="transform" type="rotate" from="0 0 -120" to="360 0 -120" dur="10s" repeatCount="indefinite"/>
+    </circle>
+    <!-- Crosshair Directional Ticks -->
+    <line x1="0" y1="-152" x2="0" y2="-140" stroke="#4ADE80" stroke-width="1.5" class="reticle-tick"/>
+    <line x1="0" y1="-100" x2="0" y2="-88" stroke="#4ADE80" stroke-width="1.5" class="reticle-tick"/>
+    <line x1="-32" y1="-120" x2="-20" y2="-120" stroke="#4ADE80" stroke-width="1.5" class="reticle-tick"/>
+    <line x1="20" y1="-120" x2="32" y2="-120" stroke="#4ADE80" stroke-width="1.5" class="reticle-tick"/>
+    <!-- Lock-on Center Pip -->
+    <circle cx="0" cy="-120" r="2.2" fill="#86EFAC">
+      <animate attributeName="opacity" values="1;0.2;1" dur="0.5s" repeatCount="indefinite"/>
+    </circle>
+  </g>
+
+  <!-- Dual-Hull Arcade Starfighter Chassis -->
   <g transform="translate(0,0)">
-    <!-- Ion Particle Trail -->
-    <ellipse cx="0" cy="18" rx="8" ry="2.5" fill="url(#ionGlow)" opacity="0.6">
-      <animate attributeName="rx" values="6;11;7;10" dur="0.2s" repeatCount="indefinite"/>
-      <animate attributeName="opacity" values="0.4;0.7;0.3;0.8" dur="0.2s" repeatCount="indefinite"/>
+    <!-- Expanding Ion Particle Glow -->
+    <ellipse cx="0" cy="18" rx="14" ry="3" fill="url(#ionGlow)" opacity="0.7">
+      <animate attributeName="rx" values="12;18;13;17" dur="0.2s" repeatCount="indefinite"/>
+      <animate attributeName="opacity" values="0.5;0.85;0.4;0.9" dur="0.2s" repeatCount="indefinite"/>
     </ellipse>
 
-    <!-- Supersonic Delta Wings -->
-    <polygon points="-10,7 -17,14 -5,9" fill="#0284C7"/>
-    <polygon points="10,7 17,14 5,9" fill="#0284C7"/>
-
-    <!-- Wingtip Plasma Nav Coils -->
-    <circle cx="-16" cy="13" r="1.4" fill="#22D3EE">
-      <animate attributeName="opacity" values="0.5;1;0.5" dur="0.8s" repeatCount="indefinite"/>
+    <!-- Twin Wingtip Plasma Railgun Cannons -->
+    <rect x="-21" y="-8" width="2.5" height="18" rx="1" fill="#7DD3FC"/>
+    <rect x="18.5" y="-8" width="2.5" height="18" rx="1" fill="#7DD3FC"/>
+    <circle cx="-19.75" cy="-8" r="1.8" fill="#22D3EE">
+      <animate attributeName="opacity" values="0.6;1;0.6" dur="0.6s" repeatCount="indefinite"/>
     </circle>
-    <circle cx="16" cy="13" r="1.4" fill="#22D3EE">
-      <animate attributeName="opacity" values="0.5;1;0.5" dur="0.8s" repeatCount="indefinite"/>
+    <circle cx="19.75" cy="-8" r="1.8" fill="#22D3EE">
+      <animate attributeName="opacity" values="0.6;1;0.6" dur="0.6s" repeatCount="indefinite"/>
     </circle>
 
-    <!-- Titanium Aerodynamic Fuselage -->
-    <polygon points="0,-16 10,7 4,4 -4,4 -10,7" fill="#38BDF8" stroke="#0284C7" stroke-width="1.2"/>
-    <polygon points="0,-14 6,5 0,2" fill="#7DD3FC" opacity="0.35"/>
+    <!-- Port & Starboard Twin Fuselage Pods -->
+    <polygon points="-14,-16 -7,-16 -5,9 -16,9" fill="#38BDF8" stroke="#0284C7" stroke-width="1.2"/>
+    <polygon points="7,-16 14,-16 16,9 5,9" fill="#38BDF8" stroke="#0284C7" stroke-width="1.2"/>
+
+    <!-- Center Deck Armor & Delta Wing Bridge -->
+    <polygon points="-7,-7 7,-7 18,9 5,6 -5,6 -18,9" fill="#0284C7"/>
+    <polygon points="0,-12 6,4 0,1 -6,4" fill="#0F172A"/>
 
     <!-- Crystalline Pilot Canopy -->
-    <ellipse cx="0" cy="-6" rx="2.5" ry="5.2" fill="#E0F2FE" opacity="0.95"/>
-    <ellipse cx="0" cy="-7.5" rx="1.2" ry="2.4" fill="#FFFFFF"/>
+    <ellipse cx="0" cy="-3" rx="3.2" ry="5.8" fill="#E0F2FE" opacity="0.95"/>
+    <ellipse cx="0" cy="-4.5" rx="1.5" ry="2.6" fill="#FFFFFF"/>
 
-    <!-- Plasma Thruster Flame (High-Frequency Dynamic Pulse) -->
-    <g id="jet-exhaust">
-      <polygon points="-3,7 3,7 0,22" fill="url(#plasmaFlame)">
+    <!-- Twin High-Frequency Plasma Thruster Flames -->
+    <g id="twin-thrusters">
+      <!-- Left Thruster Flame -->
+      <polygon points="-13,9 -8,9 -10.5,26" fill="url(#plasmaFlame)">
         <animate attributeName="opacity" values="0.75;1;0.6;0.95;0.7;1" dur="0.16s" repeatCount="indefinite"/>
       </polygon>
-      <polygon points="-1.5,7 1.5,7 0,13" fill="#FFFFFF">
+      <polygon points="-12,9 -9,9 -10.5,15" fill="#FFFFFF">
+        <animate attributeName="opacity" values="0.8;1;0.7;1" dur="0.16s" repeatCount="indefinite"/>
+      </polygon>
+
+      <!-- Right Thruster Flame -->
+      <polygon points="8,9 13,9 10.5,26" fill="url(#plasmaFlame)">
+        <animate attributeName="opacity" values="0.75;1;0.6;0.95;0.7;1" dur="0.16s" repeatCount="indefinite"/>
+      </polygon>
+      <polygon points="9,9 12,9 10.5,15" fill="#FFFFFF">
         <animate attributeName="opacity" values="0.8;1;0.7;1" dur="0.16s" repeatCount="indefinite"/>
       </polygon>
     </g>
   </g>
 
-  <!-- Smooth Kinematic Patrol Flight across timeline -->
+  <!-- Smooth Spline Horizontal Patrol Kinematics -->
   <animateTransform attributeName="transform" attributeType="XML" type="translate"
     dur="${LOOP_DUR}s" repeatCount="indefinite" calcMode="spline"
     keyTimes="0; 0.5; 1"
@@ -298,8 +355,7 @@ export function buildSvg(weeks, options = {}) {
   const cells = buildCells(dataWeeks, COLS);
   const stats = computeStats(dataWeeks);
 
-  const displayTotal = sanitizeText(stats.total || (isMock ? "766" : "0"));
-  const promptUser = sanitizeText(options.username || USERNAME);
+  const scoreText = sanitizeText(computeArcadeScore(stats.total || (isMock ? 766 : 0)));
 
   return `<svg xmlns="http://www.w3.org/2000/svg" width="${WIDTH}" height="${HEIGHT}" viewBox="0 0 ${WIDTH} ${HEIGHT}">
 <defs>
@@ -339,44 +395,46 @@ export function buildSvg(weeks, options = {}) {
   </filter>
 
   <style>
-    .term-prompt { font-family: 'Courier New', Consolas, monospace; font-size: 13px; fill: #86EFAC; font-weight: bold; letter-spacing: 0.5px; }
-    .term-path   { font-family: 'Courier New', Consolas, monospace; font-size: 13px; fill: #38BDF8; font-weight: bold; }
-    .status-text { font-family: 'Courier New', Consolas, monospace; font-size: 11px; fill: #38BDF8; font-weight: bold; letter-spacing: 1px; }
-    .status-val  { font-family: 'Courier New', Consolas, monospace; font-size: 11px; fill: #4ADE80; font-weight: bold; }
-    .axis-label  { font-family: 'Courier New', Consolas, monospace; font-size: 10px; fill: #64748B; font-weight: bold; }
-    .legend-text { font-family: 'Courier New', Consolas, monospace; font-size: 9px; fill: #64748B; font-weight: bold; letter-spacing: 0.5px; }
-    .hud-meta    { font-family: 'Courier New', Consolas, monospace; font-size: 10px; fill: #475569; letter-spacing: 1px; font-weight: bold; }
+    .hud-label-gold { font-family: 'Courier New', Consolas, monospace; font-size: 13px; fill: #FACC15; font-weight: bold; letter-spacing: 0.5px; }
+    .hud-val-gold   { font-family: 'Courier New', Consolas, monospace; font-size: 13px; fill: #FEF08A; font-weight: bold; }
+    .hud-label-cyan { font-family: 'Courier New', Consolas, monospace; font-size: 12px; fill: #38BDF8; font-weight: bold; letter-spacing: 0.5px; }
+    .hud-val-cyan   { font-family: 'Courier New', Consolas, monospace; font-size: 12px; fill: #E0F2FE; font-weight: bold; }
+    .hud-label-rose { font-family: 'Courier New', Consolas, monospace; font-size: 12px; fill: #FB7185; font-weight: bold; letter-spacing: 0.5px; }
+    .hud-val-rose   { font-family: 'Courier New', Consolas, monospace; font-size: 12px; fill: #FECDD3; font-weight: bold; }
+    .axis-label     { font-family: 'Courier New', Consolas, monospace; font-size: 10px; fill: #64748B; font-weight: bold; }
+    .legend-text    { font-family: 'Courier New', Consolas, monospace; font-size: 9px; fill: #64748B; font-weight: bold; letter-spacing: 0.5px; }
+    .hud-meta       { font-family: 'Courier New', Consolas, monospace; font-size: 10px; fill: #475569; letter-spacing: 1px; font-weight: bold; }
     text { white-space: pre; }
   </style>
 </defs>
 
-<!-- Cyber Deck Backdrop -->
+<!-- Retro Arcade Cosmic Backdrop -->
 <rect width="${WIDTH}" height="${HEIGHT}" rx="16" fill="url(#bgGlow)"/>
 <rect width="${WIDTH}" height="${HEIGHT}" rx="16" fill="url(#scanlines)"/>
-<rect x="0.75" y="0.75" width="${WIDTH - 1.5}" height="${HEIGHT - 1.5}" rx="16" fill="none" stroke="url(#borderGrad)" stroke-width="1.5"/>
+<rect x="1" y="1" width="${WIDTH - 2}" height="${HEIGHT - 2}" rx="16" fill="none" stroke="url(#borderGrad)" stroke-width="1.5"/>
+<rect x="6" y="6" width="${WIDTH - 12}" height="${HEIGHT - 12}" rx="12" fill="none" stroke="#22C55E" stroke-width="0.5" opacity="0.25"/>
 
-<!-- HUD Header Bar -->
-<g id="hud-header">
-  <circle cx="26" cy="28" r="4.5" fill="#EF4444" opacity="0.8"/>
-  <circle cx="42" cy="28" r="4.5" fill="#F59E0B" opacity="0.8"/>
-  <circle cx="58" cy="28" r="4.5" fill="#10B981" opacity="0.8"/>
+<!-- Retro Arcade Top HUD -->
+<g id="arcade-hud">
+  <!-- SCORE -->
+  <text x="24" y="32"><tspan class="hud-label-gold">SCORE: </tspan><tspan class="hud-val-gold">${scoreText}</tspan></text>
 
-  <text x="76" y="32">
-    <tspan class="term-prompt">${promptUser}@forge</tspan>
-    <tspan class="term-path"> ~ /radar.sh --timeline</tspan>
-  </text>
+  <!-- RANK / LEVEL -->
+  <text x="320" y="32"><tspan class="hud-label-cyan">RANK: </tspan><tspan class="hud-val-cyan">LVL 42 · AIML ARCHITECT</tspan></text>
 
-  <circle cx="870" cy="28" r="3.5" fill="#38BDF8">
-    <animate attributeName="opacity" values="1;0.2;1" dur="1.8s" repeatCount="indefinite"/>
-  </circle>
-  <text x="884" y="32">
-    <tspan class="status-text">ORBIT: </tspan><tspan class="status-val">ACTIVE</tspan>
-    <tspan class="status-text"> · TOTAL CONTRIBUTIONS: </tspan><tspan class="status-val">${displayTotal}</tspan>
-  </text>
+  <!-- COMBO MULTIPLIER -->
+  <text x="680" y="32"><tspan class="hud-label-rose">COMBO: </tspan><tspan class="hud-val-rose">x14 SHIPPER</tspan></text>
 
+  <!-- SHIELDS -->
+  <text x="930" y="32" class="hud-label-cyan">SHIELDS: 100%</text>
+  <g transform="translate(1045, 22)">
+    ${buildShieldBar(100)}
+  </g>
+
+  <!-- HUD Divider -->
   <line x1="20" y1="46" x2="${WIDTH - 20}" y2="46" stroke="#1E293B" stroke-width="1"/>
-  <line x1="20" y1="46" x2="160" y2="46" stroke="#22C55E" stroke-width="1" opacity="0.7"/>
-  <line x1="${WIDTH - 160}" y1="46" x2="${WIDTH - 20}" y2="46" stroke="#38BDF8" stroke-width="1" opacity="0.7"/>
+  <line x1="20" y1="46" x2="160" y2="46" stroke="#FACC15" stroke-width="1" opacity="0.8"/>
+  <line x1="${WIDTH - 160}" y1="46" x2="${WIDTH - 20}" y2="46" stroke="#22D3EE" stroke-width="1" opacity="0.8"/>
 </g>
 
 <!-- Crosshairs & Cosmic Starfield -->
@@ -389,16 +447,16 @@ ${buildMonthLabels()}
 ${buildDayLabels()}
 </g>
 
-<!-- Heatmap Contribution Grid -->
+<!-- Heatmap Contribution Power-Core Grid -->
 <g id="grid">
 ${buildGrid(cells)}</g>
 
-<!-- Bottom HUD Legend & Telemetry Metadata -->
+<!-- Bottom HUD Legend & Defense Grid Metadata -->
 ${buildLegend()}
-<text x="${WIDTH - 140}" y="${HEIGHT - 14}" class="hud-meta" text-anchor="end">[SYSTEM: RADAR SCANNER // SATELLITE LINKED]</text>
+<text x="${WIDTH - 140}" y="${HEIGHT - 12}" class="hud-meta" text-anchor="end">[ARCADE DEFENSE GRID // SECTOR: PRATIK-FORGE]</text>
 
-<!-- Symmetrical Supersonic Jet Fighter -->
-${buildJet()}
+<!-- Dual-Hull Starfighter Jet & Holographic Target Lock-On -->
+${buildArcadeStarfighter()}
 </svg>`;
 }
 
@@ -427,7 +485,7 @@ export async function fetchWeeks(username = USERNAME, token = TOKEN) {
 }
 
 export async function main() {
-  console.log("Initializing Aerospace Radar Jet Heatmap Engine...");
+  console.log("Initializing Retro Arcade Space Defender Heatmap Engine...");
 
   let weeks = [];
   let isMock = false;
@@ -438,11 +496,11 @@ export async function main() {
       weeks = await fetchWeeks(USERNAME, TOKEN);
       console.log(`Successfully retrieved ${weeks.length} weeks of live activity.`);
     } catch (err) {
-      console.warn(`Live fetch failed (${err.message}). Falling back to high-fidelity deterministic radar telemetry.`);
+      console.warn(`Live fetch failed (${err.message}). Falling back to deterministic arcade telemetry.`);
       isMock = true;
     }
   } else {
-    console.log("No GH_TOKEN detected in environment. Generating deterministic high-fidelity preview radar.");
+    console.log("No GH_TOKEN detected in environment. Generating deterministic arcade preview.");
     isMock = true;
   }
 

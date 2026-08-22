@@ -1,13 +1,4 @@
 #!/usr/bin/env node
-/**
- * Generates an animated "jet over contribution grid" SVG using a GitHub
- * user's REAL contribution calendar (last 34 weeks, same layout as
- * GitHub's own heatmap: 34 columns x 7 rows).
- *
- * Fixed strict SMIL zero-opacity clamping:
- * Bullets are 100% invisible until the exact millisecond the jet is underneath them.
- */
-
 import fs from "node:fs";
 import path from "node:path";
 
@@ -17,61 +8,36 @@ const OUTPUT = process.env.OUTPUT_PATH || "dist/github-jet.svg";
 const COLS = 34;
 const ROWS = 7;
 const CELL = 11;
-const STEP = 14; // cell + gap
+const STEP = 14;
 const GRID_X = 20;
 const GRID_Y = 15;
 const WIDTH = 513;
 const HEIGHT = 170;
 
-const JET_X_START = GRID_X + CELL / 2; // 25.5
-const JET_X_END = GRID_X + (COLS - 1) * STEP + CELL / 2; // 487.5
+// Jet travel endpoints: exactly aligned with first and last column centers
+const COL_CENTER = (col) => GRID_X + col * STEP + CELL / 2;
+const JET_X_START = COL_CENTER(0);   // 25.5
+const JET_X_END   = COL_CENTER(COLS - 1); // 487.5
 const JET_Y = 140;
-const JET_NOSE_Y = 124; // tip of jet (140 - 16 = 124)
-const LOOP_DUR = 20; // seconds, one full there-and-back pass
-const MAX_TARGETS = 12; // how many "busiest" days the jet fires on
+const JET_NOSE_Y = JET_Y - 16; // 124
+const LOOP_DUR = 20;
+const MAX_TARGETS = 12;
 const FLASH_COLOR = "#39d353";
 const BULLET_COLOR = "#7ee787";
-const BLAST_COLOR = "#56d364";
+const BLAST_COLOR  = "#56d364";
 
-if (!USERNAME) {
-  console.error("Missing GH_USERNAME env var");
-  process.exit(1);
-}
-if (!TOKEN) {
-  console.error("Missing GH_TOKEN / GITHUB_TOKEN env var");
-  process.exit(1);
-}
+if (!USERNAME) { console.error("Missing GH_USERNAME"); process.exit(1); }
+if (!TOKEN)    { console.error("Missing GH_TOKEN");    process.exit(1); }
 
-const QUERY = `
-  query($login: String!) {
-    user(login: $login) {
-      contributionsCollection {
-        contributionCalendar {
-          weeks {
-            contributionDays {
-              date
-              contributionCount
-              color
-            }
-          }
-        }
-      }
-    }
-  }
-`;
+const QUERY = `query($login:String!){user(login:$login){contributionsCollection{contributionCalendar{weeks{contributionDays{date contributionCount color}}}}}}`;
 
 async function fetchWeeks() {
   const res = await fetch("https://api.github.com/graphql", {
     method: "POST",
-    headers: {
-      Authorization: `bearer ${TOKEN}`,
-      "Content-Type": "application/json",
-    },
+    headers: { Authorization: `bearer ${TOKEN}`, "Content-Type": "application/json" },
     body: JSON.stringify({ query: QUERY, variables: { login: USERNAME } }),
   });
-  if (!res.ok) {
-    throw new Error(`GitHub API error ${res.status}: ${await res.text()}`);
-  }
+  if (!res.ok) throw new Error(`GitHub API ${res.status}`);
   const json = await res.json();
   if (json.errors) throw new Error(JSON.stringify(json.errors));
   return json.data.user.contributionsCollection.contributionCalendar.weeks;
@@ -79,119 +45,89 @@ async function fetchWeeks() {
 
 function buildCells(weeks) {
   const recent = weeks.slice(-COLS);
-  const padCount = COLS - recent.length;
-  const padded = Array.from({ length: padCount }, () => ({
-    contributionDays: Array.from({ length: ROWS }, () => ({
-      contributionCount: 0,
-      color: "#161b22",
-      date: null,
-    })),
+  const pad = COLS - recent.length;
+  const padded = Array.from({ length: pad }, () => ({
+    contributionDays: Array.from({ length: ROWS }, () => ({ contributionCount: 0, color: "#161b22", date: null })),
   })).concat(recent);
-
   const cells = [];
   padded.forEach((week, col) => {
     week.contributionDays.forEach((day, row) => {
-      cells.push({
-        col,
-        row,
-        x: GRID_X + col * STEP,
-        y: GRID_Y + row * STEP,
-        color: day.color || "#161b22",
-        count: day.contributionCount || 0,
-        date: day.date,
-      });
+      cells.push({ col, row, x: GRID_X + col * STEP, y: GRID_Y + row * STEP,
+        color: day.color || "#161b22", count: day.contributionCount || 0 });
     });
   });
   return cells;
 }
 
 function pickTargets(cells) {
-  return [...cells]
-    .filter((c) => c.count > 0)
-    .sort((a, b) => b.count - a.count)
-    .slice(0, MAX_TARGETS)
+  return [...cells].filter(c => c.count > 0)
+    .sort((a, b) => b.count - a.count).slice(0, MAX_TARGETS)
     .sort((a, b) => a.col - b.col || a.row - b.row);
 }
 
-// Exactly when the jet's nose reaches the center of this column
-function timeWhenJetAtCol(col, direction) {
-  const fraction = col / (COLS - 1);
-  return direction === "forward" ? 0.5 * fraction : 1.0 - 0.5 * fraction;
+// When the jet center is directly above column col
+// Forward: linear from t=0 (col 0) to t=0.5 (col 33)
+// Backward: linear from t=0.5 (col 33) to t=1.0 (col 0)
+function jetTimeAtCol(col, dir) {
+  const frac = col / (COLS - 1);
+  return dir === "forward" ? 0.5 * frac : 0.5 + 0.5 * (1 - frac);
 }
 
-function fmt(n) {
-  return Number(n.toFixed(4));
-}
+const F = n => Number(n.toFixed(5));
 
 function buildGrid(cells, targets) {
-  const targetKey = new Set(targets.map((t) => `${t.col}-${t.row}`));
+  const tgtSet = new Set(targets.map(t => `${t.col}-${t.row}`));
   let svg = "";
-  const travelDur = 0.010;
-  const flashDur = 0.012;
-
+  // Bullet flight: 0.002 of loop = 0.04s real time (near-instant)
+  const BULLET_FLIGHT = 0.002;
+  const FLASH_DUR = 0.008;
   for (const c of cells) {
-    const isTarget = targetKey.has(`${c.col}-${c.row}`);
-    if (!isTarget) {
-      svg += `<rect x="${c.x.toFixed(2)}" y="${c.y.toFixed(2)}" width="${CELL}" height="${CELL}" rx="2" ry="2" fill="${c.color}"/>\n`;
+    if (!tgtSet.has(`${c.col}-${c.row}`)) {
+      svg += `<rect x="${c.x}" y="${c.y}" width="${CELL}" height="${CELL}" rx="2" ry="2" fill="${c.color}"/>\n`;
       continue;
     }
-    // Impact times
-    const tFwd = timeWhenJetAtCol(c.col, "forward") + travelDur;
-    const tBack = timeWhenJetAtCol(c.col, "backward") + travelDur;
+    // Flash when bullet arrives (jet time + flight time)
+    const tFwd  = jetTimeAtCol(c.col, "forward") + BULLET_FLIGHT;
+    const tBack = jetTimeAtCol(c.col, "backward") + BULLET_FLIGHT;
     const [t1, t2] = [Math.min(tFwd, tBack), Math.max(tFwd, tBack)];
-    
-    const t1Pre = Math.max(0, t1 - 0.0002);
-    const t1End = t1 + flashDur;
-    const t2Pre = Math.max(0, t2 - 0.0002);
-    const t2End = t2 + flashDur;
-
-    svg += `<rect x="${c.x.toFixed(2)}" y="${c.y.toFixed(2)}" width="${CELL}" height="${CELL}" rx="2" ry="2" fill="${c.color}">` +
-      `<animate attributeName="fill" dur="${LOOP_DUR}s" repeatCount="indefinite" ` +
-      `keyTimes="0;${fmt(t1Pre)};${fmt(t1)};${fmt(t1End)};${fmt(t2Pre)};${fmt(t2)};${fmt(t2End)};1" ` +
-      `values="${c.color};${c.color};${FLASH_COLOR};${c.color};${c.color};${FLASH_COLOR};${c.color};${c.color}"/>` +
+    svg += `<rect x="${c.x}" y="${c.y}" width="${CELL}" height="${CELL}" rx="2" ry="2" fill="${c.color}">` +
+      `<animate attributeName="fill" dur="${LOOP_DUR}s" repeatCount="indefinite" calcMode="discrete" ` +
+      `keyTimes="0;${F(t1)};${F(t1+FLASH_DUR)};${F(t2)};${F(t2+FLASH_DUR)};1" ` +
+      `values="${c.color};${FLASH_COLOR};${c.color};${FLASH_COLOR};${c.color};${c.color}"/>` +
       `</rect>\n`;
   }
   return svg;
 }
 
 function buildBulletsAndBlasts(targets) {
-  let bullets = "";
-  let blasts = "";
-  const travelDur = 0.010; // bullet flight duration
-  const blastDur = 0.012; // blast expansion duration
+  let bullets = "", blasts = "";
+  // Near-instant flight: 0.002 of 20s = 40ms real time
+  // During 40ms the jet moves only ~1.8px — imperceptible offset
+  const FLIGHT = 0.002;
+  const BLAST_DUR = 0.010;
 
   for (const dir of ["forward", "backward"]) {
-    const ordered = dir === "forward" ? targets : [...targets].reverse();
-    for (const c of ordered) {
-      const tLaunch = timeWhenJetAtCol(c.col, dir);
-      const tPreLaunch = Math.max(0, tLaunch - 0.0002);
-      const tArrive = tLaunch + travelDur;
-      const tFade = tArrive + 0.001;
-      const tPostFade = Math.min(1, tFade + 0.0002);
-      
-      const cx = fmt(c.x + CELL / 2);
-      const targetY = fmt(c.y + CELL / 2);
+    for (const c of (dir === "forward" ? targets : [...targets].reverse())) {
+      const tFire   = jetTimeAtCol(c.col, dir);      // jet directly above
+      const tHit    = tFire + FLIGHT;                 // bullet arrives
+      const tGone   = tHit + 0.001;                   // bullet disappears
+      const cx = F(c.x + CELL / 2);
+      const ty = F(c.y + CELL / 2);
 
-      // Bullet: STRICT 0 opacity before tLaunch and after tFade
+      // Bullet: discrete opacity so it snaps on/off with zero interpolation
       bullets += `<circle cx="${cx}" cy="${JET_NOSE_Y}" r="2.4" fill="${BULLET_COLOR}" opacity="0">` +
-        `<animate attributeName="cy" dur="${LOOP_DUR}s" repeatCount="indefinite" ` +
-        `keyTimes="0;${fmt(tLaunch)};${fmt(tArrive)};1" values="${JET_NOSE_Y};${JET_NOSE_Y};${targetY};${targetY}"/>` +
-        `<animate attributeName="opacity" dur="${LOOP_DUR}s" repeatCount="indefinite" ` +
-        `keyTimes="0;${fmt(tPreLaunch)};${fmt(tLaunch)};${fmt(tArrive)};${fmt(tFade)};${fmt(tPostFade)};1" ` +
-        `values="0;0;1;1;0;0;0"/>` +
+        `<animate attributeName="cy" dur="${LOOP_DUR}s" repeatCount="indefinite" calcMode="discrete" ` +
+        `keyTimes="0;${F(tFire)};${F(tHit)};1" values="${JET_NOSE_Y};${JET_NOSE_Y};${ty};${ty}"/>` +
+        `<animate attributeName="opacity" dur="${LOOP_DUR}s" repeatCount="indefinite" calcMode="discrete" ` +
+        `keyTimes="0;${F(tFire)};${F(tGone)};1" values="0;1;0;0"/>` +
         `</circle>\n`;
 
-      // Blast: STRICT 0 opacity until bullet hits at tArrive
-      const tPreArrive = Math.max(0, tArrive - 0.0002);
-      const tBlastEnd = tArrive + blastDur;
-      const tPostBlast = Math.min(1, tBlastEnd + 0.0002);
-
-      blasts += `<circle cx="${cx}" cy="${targetY}" r="0" fill="none" stroke="${BLAST_COLOR}" stroke-width="1.6" opacity="0">` +
+      // Blast ring
+      blasts += `<circle cx="${cx}" cy="${ty}" r="0" fill="none" stroke="${BLAST_COLOR}" stroke-width="1.6" opacity="0">` +
         `<animate attributeName="r" dur="${LOOP_DUR}s" repeatCount="indefinite" ` +
-        `keyTimes="0;${fmt(tArrive)};${fmt(tBlastEnd)};1" values="0;1;9;9"/>` +
-        `<animate attributeName="opacity" dur="${LOOP_DUR}s" repeatCount="indefinite" ` +
-        `keyTimes="0;${fmt(tPreArrive)};${fmt(tArrive)};${fmt(tBlastEnd)};${fmt(tPostBlast)};1" ` +
-        `values="0;0;1;0;0;0"/>` +
+        `keyTimes="0;${F(tHit)};${F(tHit+BLAST_DUR)};1" values="0;1;9;9"/>` +
+        `<animate attributeName="opacity" dur="${LOOP_DUR}s" repeatCount="indefinite" calcMode="discrete" ` +
+        `keyTimes="0;${F(tHit)};${F(tHit+BLAST_DUR)};1" values="0;1;0;0"/>` +
         `</circle>\n`;
     }
   }
@@ -199,19 +135,14 @@ function buildBulletsAndBlasts(targets) {
 }
 
 function buildStars() {
-  const pts = [
-    [8, 20, 1.2], [8, 60, 1.6], [8, 100, 2.0],
-    [505, 25, 1.2], [505, 70, 1.6], [505, 110, 2.0],
-    [30, 164, 1.2], [483, 164, 1.6],
-  ];
-  return pts.map(([x, y, dur]) =>
-    `<circle cx="${x}" cy="${y}" r="1.1" fill="#8b949e"><animate attributeName="opacity" values="0.2;1;0.2" dur="${dur}s" repeatCount="indefinite"/></circle>`
-  ).join("\n");
+  return [[8,20,1.2],[8,60,1.6],[8,100,2.0],[505,25,1.2],[505,70,1.6],[505,110,2.0],[30,164,1.2],[483,164,1.6]]
+    .map(([x,y,d]) => `<circle cx="${x}" cy="${y}" r="1.1" fill="#8b949e"><animate attributeName="opacity" values="0.2;1;0.2" dur="${d}s" repeatCount="indefinite"/></circle>`)
+    .join("\n");
 }
 
 function buildJet() {
   return `<g id="jet">
-  <g transform="translate(0,0)">
+  <g>
     <polygon points="0,-16 8,6 4,3 -4,3 -8,6" fill="#58a6ff" stroke="#1f6feb" stroke-width="1"/>
     <polygon points="-8,6 -14,12 -4,7" fill="#388bfd"/>
     <polygon points="8,6 14,12 4,7" fill="#388bfd"/>
@@ -221,9 +152,9 @@ function buildJet() {
     </polygon>
   </g>
   <animateTransform attributeName="transform" attributeType="XML" type="translate"
-    dur="${LOOP_DUR}s" repeatCount="indefinite"
+    dur="${LOOP_DUR}s" repeatCount="indefinite" calcMode="linear"
     keyTimes="0;0.5;1"
-    values="${fmt(JET_X_START)},${JET_Y}.00;${fmt(JET_X_END)},${JET_Y}.00;${fmt(JET_X_START)},${JET_Y}.00"/>
+    values="${JET_X_START},${JET_Y};${JET_X_END},${JET_Y};${JET_X_START},${JET_Y}"/>
 </g>`;
 }
 
@@ -231,7 +162,6 @@ function buildSvg(weeks) {
   const cells = buildCells(weeks);
   const targets = pickTargets(cells);
   const { bullets, blasts } = buildBulletsAndBlasts(targets);
-
   return `<svg viewBox="0 0 ${WIDTH} ${HEIGHT}" xmlns="http://www.w3.org/2000/svg">
 <rect x="0" y="0" width="${WIDTH}" height="${HEIGHT}" fill="#0d1117"/>
 ${buildStars()}
@@ -249,13 +179,10 @@ async function main() {
   console.log(`Fetching contributions for ${USERNAME}...`);
   const weeks = await fetchWeeks();
   const svg = buildSvg(weeks);
-  const outPath = path.resolve(OUTPUT);
-  fs.mkdirSync(path.dirname(outPath), { recursive: true });
-  fs.writeFileSync(outPath, svg, "utf8");
-  console.log(`Wrote ${outPath}`);
+  const out = path.resolve(OUTPUT);
+  fs.mkdirSync(path.dirname(out), { recursive: true });
+  fs.writeFileSync(out, svg, "utf8");
+  console.log(`Wrote ${out}`);
 }
 
-main().catch((err) => {
-  console.error(err);
-  process.exit(1);
-});
+main().catch(e => { console.error(e); process.exit(1); });

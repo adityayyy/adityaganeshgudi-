@@ -252,44 +252,42 @@ export function buildMonotonicKeyTimes(events) {
 }
 
 export function selectTargets(cells) {
+  // 1. Group active cells (count > 0 and non-empty color) by column, finding the maximum contribution cell per column
   const byCol = new Map();
   for (const c of cells) {
-    if (c.count > 0) {
+    if (c.count > 0 && c.color !== THEME.palette[0]) {
       if (!byCol.has(c.col) || byCol.get(c.col).count < c.count) {
         byCol.set(c.col, c);
       }
     }
   }
 
-  const activeCols = Array.from(byCol.keys()).sort((a, b) => a - b);
+  // If no contributions exist, return empty targets list immediately (never fabricate fake cells)
+  if (byCol.size === 0) {
+    return [];
+  }
+
+  // 2. Sort candidate column cells by count descending (largest contributions first), then by column
+  const candidates = Array.from(byCol.values()).sort((a, b) => {
+    if (b.count !== a.count) return b.count - a.count;
+    return a.col - b.col;
+  });
+
+  // 3. Greedily select top high-value targets while enforcing a minimum 3-column spacing
   const selectedCols = [];
-  const anchorCols = [4, 11, 18, 25, 32, 39, 46];
+  const MAX_TARGETS = 8;
+  const MIN_SPACING = 3;
 
-  for (const anchor of anchorCols) {
-    const candidates = activeCols.filter(c => Math.abs(c - anchor) <= 2);
-    let chosen = anchor;
-    if (candidates.length > 0) {
-      chosen = candidates.reduce((best, cur) => (byCol.get(cur).count > byCol.get(best).count ? cur : best), candidates[0]);
-    } else {
-      if (!byCol.has(anchor)) {
-        const colCells = cells.filter(c => c.col === anchor);
-        const repCell = colCells[Math.floor(colCells.length / 2)] || colCells[0] || {
-          col: anchor,
-          row: 3,
-          x: GRID_X + anchor * STEP,
-          y: GRID_Y + 3 * STEP,
-          count: 1,
-          color: THEME.palette[2],
-          date: ""
-        };
-        byCol.set(anchor, repCell);
-      }
-    }
-
-    if (selectedCols.length === 0 || chosen - selectedCols[selectedCols.length - 1] >= 4) {
-      selectedCols.push(chosen);
+  for (const cand of candidates) {
+    if (selectedCols.length >= MAX_TARGETS) break;
+    const tooClose = selectedCols.some(c => Math.abs(c - cand.col) < MIN_SPACING);
+    if (!tooClose) {
+      selectedCols.push(cand.col);
     }
   }
+
+  // 4. Sort selected columns ascending to ensure monotonic forward and return timelines
+  selectedCols.sort((a, b) => a - b);
 
   return selectedCols.map(col => {
     const cell = byCol.get(col);
@@ -311,7 +309,7 @@ export function selectTargets(cells) {
       y: cell.y,
       cx,
       cy,
-      count: cell.count || 1,
+      count: cell.count,
       color: cell.color,
       k_lock_fwd,
       k_hit_fwd,

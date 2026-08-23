@@ -182,4 +182,29 @@ describe('TDD: Precision Closed-Form Spline Kinematics & Synchronized Combat', (
       assert.ok(svg.includes('id="world-space-railguns"'));
     });
   });
+
+  describe('Profile Terminal Monospace Alignment & Boundary Invariance', () => {
+    it('should ensure all terminal bio rows in dark.svg and light.svg align values at exact 28-character column offset', async () => {
+      const fs = await import('node:fs');
+      for (const file of ['dark.svg', 'light.svg']) {
+        const content = fs.readFileSync(file, 'utf8');
+        // Extract clip-path lines lc1..lc18 that contain <tspan class="value">
+        const lineMatches = content.match(/<g clip-path="url\(#lc(?:[1-9]|1[0-8])\)">.*?<\/g>/g) || [];
+        for (const g of lineMatches) {
+          if (!g.includes('class="value"')) continue;
+          // Extract text inside tspans before class="value"
+          const prefixMatch = g.match(/<text [^>]+>(.*?)<tspan [^>]*class="value"/);
+          if (prefixMatch) {
+            // Strip XML tags to get raw character count
+            const rawPrefix = prefixMatch[1].replace(/<[^>]+>/g, '');
+            assert.strictEqual(
+              rawPrefix.length,
+              28,
+              `File ${file} line has prefix length ${rawPrefix.length} instead of 28: "${rawPrefix}"`
+            );
+          }
+        }
+      }
+    });
+  });
 });

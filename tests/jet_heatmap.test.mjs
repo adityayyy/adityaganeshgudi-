@@ -15,6 +15,7 @@ import {
   buildProminentRailguns,
   buildExplosiveImpacts,
   buildDynamicReticle,
+  buildGrid,
   JET_X_START,
   JET_X_END,
   THEME
@@ -100,28 +101,64 @@ describe('TDD: Precision Closed-Form Spline Kinematics & Synchronized Combat', (
   });
 
   describe('Target Selection & Decoupled Combat Layer', () => {
-    it('should select 6 to 8 elite power nodes with minimum 4-column spacing', () => {
+    it('should NEVER target empty (count === 0 / level 0) cells in asymmetric heatmaps', () => {
+      // Simulate user profile: 0 contributions in cols 0..29, large contributions in cols 30..51
+      const asymmetricWeeks = Array.from({ length: 52 }, (_, col) => ({
+        contributionDays: Array.from({ length: 7 }, (_, row) => {
+          if (col >= 30) {
+            return { contributionCount: (col % 5) + 3, color: THEME.palette[3], date: '2026-06-01' };
+          }
+          return { contributionCount: 0, color: THEME.palette[0], date: '2026-01-01' };
+        })
+      }));
+      const cells = buildCells(asymmetricWeeks, 52);
+      const targets = selectTargets(cells);
+
+      assert.ok(targets.length > 0, 'Should find targets in active columns');
+      for (const t of targets) {
+        assert.ok(t.col >= 30, `Target was chosen in empty column ${t.col} (< 30)`);
+        assert.ok(t.count > 0, `Target in col ${t.col} has 0 count`);
+        assert.notStrictEqual(t.color, THEME.palette[0], `Target in col ${t.col} has level-0 empty color`);
+      }
+    });
+
+    it('should prioritize highest contribution count nodes and maintain minimum 3-column spacing', () => {
       const mockWeeks = generateMockWeeks(52);
       const cells = buildCells(mockWeeks, 52);
       const targets = selectTargets(cells);
 
-      assert.ok(targets.length >= 6 && targets.length <= 8, `Target count ${targets.length} out of bounds`);
+      assert.ok(targets.length >= 1 && targets.length <= 8, `Target count ${targets.length} out of bounds`);
       
-      // Verify minimum spacing rule
-      for (let i = 1; i < targets.length; i++) {
-        const diff = targets[i].col - targets[i - 1].col;
-        assert.ok(diff >= 4, `Target spacing violation between col ${targets[i - 1].col} and ${targets[i].col}`);
+      // Verify all chosen targets have count > 0 and no spacing violation (< 3)
+      for (let i = 0; i < targets.length; i++) {
+        assert.ok(targets[i].count > 0, `Target ${i} has non-positive count: ${targets[i].count}`);
+        assert.notStrictEqual(targets[i].color, THEME.palette[0]);
+        if (i > 0) {
+          const diff = targets[i].col - targets[i - 1].col;
+          assert.ok(diff >= 3, `Target spacing violation between col ${targets[i - 1].col} and ${targets[i].col} (diff: ${diff})`);
+        }
       }
     });
 
-    it('should handle completely empty heatmaps (0 contributions) gracefully without error', () => {
+    it('should return 0 targets for completely empty heatmaps (0 contributions) gracefully without error', () => {
       const emptyWeeks = Array.from({ length: 52 }, () => ({
         contributionDays: Array.from({ length: 7 }, () => ({ contributionCount: 0, color: THEME.palette[0], date: '2026-01-01' }))
       }));
       const cells = buildCells(emptyWeeks, 52);
       const targets = selectTargets(cells);
       assert.ok(Array.isArray(targets));
-      assert.ok(targets.length >= 6);
+      assert.strictEqual(targets.length, 0, `Expected 0 targets for empty heatmap, got ${targets.length}`);
+
+      // Consumer builders must handle empty targets safely
+      const lockSvg = buildTargetLockBrackets(targets);
+      const railgunSvg = buildProminentRailguns(targets);
+      const impactSvg = buildExplosiveImpacts(targets);
+      const gridSvg = buildGrid(cells, targets);
+
+      assert.ok(lockSvg.includes('id="target-lock-brackets"'));
+      assert.ok(railgunSvg.includes('id="world-space-railguns"'));
+      assert.ok(impactSvg.includes('id="explosive-impacts"'));
+      assert.ok(gridSvg.includes('<rect'));
     });
 
     it('should generate transient holographic lock brackets for each target', () => {

@@ -152,16 +152,28 @@ export function generateMockWeeks(colCount = COLS) {
   return weeks;
 }
 
-export function computeStats(weeks) {
+export function computeStats(data) {
   let total = 0;
   let activeDays = 0;
   let maxDay = 0;
 
-  for (const week of weeks) {
-    if (!week || !Array.isArray(week.contributionDays)) continue;
-    for (const day of week.contributionDays) {
-      if (!day) continue;
-      const count = Number(day.contributionCount) || 0;
+  if (!data) return { total, activeDays, maxDay };
+
+  if (Array.isArray(data) && data[0] && Array.isArray(data[0].contributionDays)) {
+    for (const week of data) {
+      if (!week || !Array.isArray(week.contributionDays)) continue;
+      for (const day of week.contributionDays) {
+        if (!day) continue;
+        const count = Number(day.contributionCount) || 0;
+        total += count;
+        if (count > 0) activeDays++;
+        if (count > maxDay) maxDay = count;
+      }
+    }
+  } else if (Array.isArray(data)) {
+    for (const c of data) {
+      if (!c) continue;
+      const count = Number(c.count !== undefined ? c.count : c.contributionCount) || 0;
       total += count;
       if (count > 0) activeDays++;
       if (count > maxDay) maxDay = count;
@@ -483,14 +495,44 @@ export function buildDynamicReticle(targets = []) {
 </g>`;
 }
 
-export function buildMonthLabels() {
+export function buildMonthLabels(cells = []) {
   let svg = "";
-  const monthCols = [0, 4, 9, 13, 17, 22, 26, 30, 35, 39, 43, 48];
-  monthCols.forEach((col, idx) => {
+  const monthCols = [];
+  let lastMonth = -1;
+  let lastCol = -10;
+
+  // Find column positions where month changes across the 52 weeks
+  for (let col = 0; col < COLS; col++) {
+    const colCells = cells.filter(c => c.col === col && c.date);
+    if (colCells.length === 0) continue;
+    const dateStr = colCells[0].date;
+    const d = new Date(dateStr);
+    if (isNaN(d.getTime())) continue;
+
+    const m = d.getUTCMonth();
+    if (m !== lastMonth) {
+      // Ensure at least 2 columns separation between adjacent month labels
+      if (col - lastCol >= 2) {
+        monthCols.push({ col, label: MONTH_NAMES[m] });
+        lastCol = col;
+      }
+      lastMonth = m;
+    }
+  }
+
+  // Fallback if no valid dates exist in input
+  if (monthCols.length === 0) {
+    const defaultMonthCols = [0, 4, 9, 13, 17, 22, 26, 30, 35, 39, 43, 48];
+    defaultMonthCols.forEach((col, idx) => {
+      monthCols.push({ col, label: MONTH_NAMES[idx % MONTH_NAMES.length] });
+    });
+  }
+
+  for (const { col, label } of monthCols) {
     const x = GRID_X + col * STEP;
-    const label = MONTH_NAMES[idx % MONTH_NAMES.length];
     svg += `  <text x="${x}" y="74" class="axis-label">${label}</text>\n`;
-  });
+  }
+
   return svg;
 }
 
@@ -692,7 +734,7 @@ ${buildStars()}
 
 <!-- Month and Day Grid Axes -->
 <g id="axes">
-${buildMonthLabels()}
+${buildMonthLabels(cells)}
 ${buildDayLabels()}
 </g>
 

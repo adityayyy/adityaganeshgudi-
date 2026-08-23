@@ -16,6 +16,7 @@ import {
   buildExplosiveImpacts,
   buildDynamicReticle,
   buildGrid,
+  buildMonthLabels,
   JET_X_START,
   JET_X_END,
   THEME
@@ -33,8 +34,21 @@ describe('TDD: Precision Closed-Form Spline Kinematics & Synchronized Combat', (
 
     it('should correctly calculate arcade score from contribution count', () => {
       assert.strictEqual(computeArcadeScore(766), '766,000 PTS');
+      assert.strictEqual(computeArcadeScore(837), '837,000 PTS');
       assert.strictEqual(computeArcadeScore(0), '0 PTS');
       assert.strictEqual(computeArcadeScore(1250), '1,250,000 PTS');
+    });
+
+    it('should accurately compute total contributions from both weeks and cells array structures', () => {
+      const mockWeeks = generateMockWeeks(52);
+      const statsFromWeeks = computeStats(mockWeeks);
+      assert.ok(statsFromWeeks.total > 0);
+      assert.ok(statsFromWeeks.activeDays > 0);
+
+      const cells = buildCells(mockWeeks, 52);
+      const statsFromCells = computeStats(cells);
+      assert.strictEqual(statsFromCells.total, statsFromWeeks.total);
+      assert.strictEqual(statsFromCells.activeDays, statsFromWeeks.activeDays);
     });
 
     it('should generate 10 segmented glowing shield health blocks', () => {
@@ -217,6 +231,15 @@ describe('TDD: Precision Closed-Form Spline Kinematics & Synchronized Combat', (
       assert.ok(svg.includes('id="boresight-reticle"'));
       assert.ok(svg.includes('id="target-lock-brackets"'));
       assert.ok(svg.includes('id="world-space-railguns"'));
+    });
+
+    it('should generate rolling month labels matching 52-week chronological window', () => {
+      const mockWeeks = generateMockWeeks(52);
+      const cells = buildCells(mockWeeks, 52);
+      const monthSvg = buildMonthLabels(cells);
+      assert.ok(monthSvg.includes('class="axis-label"'));
+      const textMatches = monthSvg.match(/<text [^>]+>([^<]+)<\/text>/g) || [];
+      assert.ok(textMatches.length >= 10 && textMatches.length <= 13);
     });
   });
 

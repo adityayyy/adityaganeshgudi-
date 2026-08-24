@@ -753,7 +753,7 @@ ${buildExplosiveImpacts(targets)}
 
 <!-- Bottom HUD Legend & Defense Grid Metadata -->
 ${buildLegend()}
-<text x="${WIDTH - 140}" y="${HEIGHT - 12}" class="hud-meta" text-anchor="end">[ARCADE DEFENSE GRID // SECTOR: PRATIK-FORGE]</text>
+<text x="${WIDTH - 140}" y="${HEIGHT - 12}" class="hud-meta" text-anchor="end">[ARCADE DEFENSE GRID // SECTOR: ${USERNAME.toUpperCase()}]</text>
 
 <!-- Dual-Hull Starfighter Jet & Forward Boresight Sighting Laser -->
 ${buildArcadeStarfighter(targets)}

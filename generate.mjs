@@ -12,7 +12,7 @@
 import fs from "node:fs";
 import path from "node:path";
 
-export const USERNAME = process.env.GH_USERNAME || "pratikforge";
+export const USERNAME = process.env.GH_USERNAME || "adityayyy";
 export const TOKEN = process.env.GH_TOKEN || process.env.GITHUB_TOKEN || "";
 export const OUTPUT = process.env.OUTPUT_PATH || "dist/github-jet.svg";
 
@@ -817,8 +817,8 @@ export async function main() {
     console.log(`Synced to ${rootSvg}`);
   }
 
-  // Also write to dist/clone/pratikforge/github-jet.svg if path exists
-  const cloneOut = path.resolve("dist/clone/pratikforge/github-jet.svg");
+  // Also write to dist/clone/adityayyy/github-jet.svg if path exists
+  const cloneOut = path.resolve("dist/clone/adityayyy/github-jet.svg");
   if (fs.existsSync(path.dirname(cloneOut))) {
     fs.writeFileSync(cloneOut, svg, "utf8");
     console.log(`Synced to ${cloneOut}`);

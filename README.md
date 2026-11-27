@@ -6,9 +6,9 @@
 
 <p align="center">
   <picture>
-    <source media="(prefers-color-scheme: dark)" srcset="./assets/studio-cool-dark.svg" />
-    <source media="(prefers-color-scheme: light)" srcset="./assets/studio-cool-light.svg" />
-    <img alt="Aditya — Overview, Stack, Velocity, and 53-Week Contribution Tapestry" src="./assets/studio-cool-dark.svg" width="100%" />
+    <source media="(prefers-color-scheme: dark)" srcset="./assets/studio-cool-dark.svg?v=2" />
+    <source media="(prefers-color-scheme: light)" srcset="./assets/studio-cool-light.svg?v=2" />
+    <img alt="Aditya — Overview, Stack, Velocity, and 53-Week Contribution Tapestry" src="./assets/studio-cool-dark.svg?v=2" width="100%" />
   </picture>
 </p>
 

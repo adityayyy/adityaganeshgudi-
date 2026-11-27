@@ -18,6 +18,5 @@
 
 <p align="center">
   <a href="https://github.com/adityayyy">GitHub</a> &nbsp;·&nbsp;
-  <a href="https://linkedin.com/in/pratikyadav21">LinkedIn</a> &nbsp;·&nbsp;
-  <a href="https://x.com/pratik_buildz">X</a>
+  <a href="https://aditya-info.pages.dev">Website</a>
 </p>

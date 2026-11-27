@@ -138,7 +138,7 @@ def fetch_stats(login: str, token: str) -> dict:
 
 
 def main() -> None:
-    login = os.environ.get("GH_USERNAME", "pratikforge")
+    login = os.environ.get("GH_USERNAME", "adityayyy")
     token = os.environ.get("GH_TOKEN", "").strip()
     if not token:
         raise RuntimeError("GH_TOKEN environment variable is required")

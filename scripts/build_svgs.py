@@ -128,7 +128,7 @@ THEMES = {
     },
 }
 
-# Verified 2026 in-demand skills backed by pratikforge repositories
+# Verified 2026 in-demand skills backed by adityayyy repositories
 STACK_ROWS = [
     ("Agents & AI", "Multi-Agent Orchestration · MCP · Google ADK · LLM Evals · RAG · Multimodal"),
     ("Security & CUA", "Agent Guardrails · Sandboxing · Computer Use (CUA) · Playwright · Telemetry"),
@@ -155,12 +155,12 @@ def build_studio_svg(theme: str, stats: dict) -> str:
 
     # ── BAND A: Masthead + Bio + 5 Live Executive KPIs (y=8..98) ──
     name_g = text_to_paths(
-        FONTS["display"], "Pratik", x=24, y=49, font_size=40, fill=p["primary"], letter_spacing=0.4
+        FONTS["display"], "Aditya", x=24, y=49, font_size=40, fill=p["primary"], letter_spacing=0.4
     )
-    name_w = measure_text(FONTS["display"], "Pratik", 40, 0.4)
+    name_w = measure_text(FONTS["display"], "Aditya", 40, 0.4)
     handle_g = text_to_paths(
         FONTS["sans_medium"],
-        "pratikforge",
+        "adityayyy",
         x=24 + name_w + 12,
         y=49,
         font_size=14,
@@ -436,7 +436,7 @@ def build_studio_svg(theme: str, stats: dict) -> str:
     grid_w = len(weeks) * step - gap
     grid_h = 7 * step - gap
 
-    return f'''<svg xmlns="http://www.w3.org/2000/svg" width="900" height="540" viewBox="0 0 900 540" role="img" aria-label="Pratik — Cool Impasto Engineering Overview">
+    return f'''<svg xmlns="http://www.w3.org/2000/svg" width="900" height="540" viewBox="0 0 900 540" role="img" aria-label="Aditya — Cool Impasto Engineering Overview">
   <defs>
     <style>
       @keyframes waterCellGlint {{

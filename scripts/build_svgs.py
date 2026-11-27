@@ -528,7 +528,7 @@ def main() -> None:
     for theme in ("dark", "light"):
         content = build_studio_svg(theme, stats)
         ET.fromstring(content)
-        out = ASSETS_DIR / f"studio-cool-{theme}.svg"
+        out = ASSETS_DIR / f"studio-cool-{theme}-v2.svg"
         out.write_text(content, encoding="utf-8")
         print(f"Wrote {out.name} ({out.stat().st_size / 1024:.1f} KB)")
 

@@ -40,12 +40,12 @@ jobs:
 
       - name: Commit and push updated SVGs if changed
         run: |
-          if git diff --quiet -- assets/studio-cool-dark.svg assets/studio-cool-light.svg; then
+          if git diff --quiet -- assets/studio-cool-dark-v2.svg assets/studio-cool-light-v2.svg; then
             echo "No SVG changes to commit."
             exit 0
           fi
           git config user.name "adityayyy"
           git config user.email "adityayyy@users.noreply.github.com"
-          git add assets/studio-cool-dark.svg assets/studio-cool-light.svg
+          git add assets/studio-cool-dark-v2.svg assets/studio-cool-light-v2.svg
           git commit -m "chore: update live Cool Impasto studio SVGs [skip ci]"
           git push
